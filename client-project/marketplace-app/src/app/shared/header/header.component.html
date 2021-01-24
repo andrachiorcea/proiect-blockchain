@@ -10,14 +10,16 @@
   </button>
 
   <div>
-    <mat-form-field appearance="fill">
+    <form class="example-container" [formGroup]="options" [style.fontSize.px]="14">
+    <mat-form-field appearance="standard">
       <mat-label>Select account</mat-label>
-      <mat-select (selectionChange)="changeAccount($event.value)">
+      <mat-select [formControl]="accountControl" (selectionChange)="changeAccount($event.value)">
         <mat-option *ngFor="let account of accounts" [value]="account">
           {{account}}
         </mat-option>
       </mat-select>
     </mat-form-field>
+  </form>
   </div>
 
 
