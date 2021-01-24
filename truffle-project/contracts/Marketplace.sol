@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.7.4;
-// pragma experimental ABIEncoderV2;
+pragma solidity ^0.7.0;
+pragma experimental ABIEncoderV2;
 
 import "./CustomToken.sol";
 
@@ -36,7 +36,7 @@ contract Marketplace {
 
     struct Product{
         uint id;
-        string desctiption;
+        string description;
         uint DEV;
         uint REV;
         string expertise;
@@ -67,14 +67,13 @@ contract Marketplace {
 
 // OTHER FIELDS
     address owner;
-    CustomToken public tokens;
-
+    CustomToken public customTokenContract;
     Product[] activeProducts;
-    Product[] doneProducts;
-    uint productIds = 0;
+    Product[] finishedProducts;
+    uint currentProductid = 0;
 
     constructor(
-        CustomToken _tokenContract,
+        CustomToken tokenContract,
         Manager[] memory _managers,
         Freelancer[] memory _freelancers,
         Evaluator[] memory _evaluators,
@@ -82,9 +81,9 @@ contract Marketplace {
         uint numberTokens)
     { 
         owner = msg.sender;
-        tokenContract = _tokenContract;
-        tokensToInit = tokens;
-        require(_funders.length * tokens <= tokenContract.balanceOf(owner));
+        customTokenContract = tokenContract;
+        require(_funders.length * numberTokens <= tokenContract.balanceOf(owner), 
+        "The tokens that you want to allocate are more than the total number of tokens in the contract");
 
         for(uint i=0; i < _managers.length; i++){
             managers[_managers[i].addr] = _managers[i];
@@ -103,8 +102,64 @@ contract Marketplace {
 
         for(uint i=0; i < _funders.length; i++){
             funders[_funders[i].addr] = _funders[i];
-            fundersToInit.push(_funders[i]);
-            // tokenContract.transferFrom(owner, _funders[i].addr, tokens);
+            tokenContract.approve(funders[_funders[i].addr].addr, numberTokens);
+            tokenContract.transfer(funders[_funders[i].addr].addr, numberTokens);
         }
+    }
+
+// =====================================HELPERS=====================================
+
+    modifier onlyOwner(){
+        require(msg.sender == owner, "Only the owner has rights for this operation; please dont waste gas");
+        _;
+    }
+
+    modifier onlyManager() {
+        require(managers[msg.sender].addr != address(0x0), "Function rsetricted to managers");
+        _;
+    }
+
+    modifier onlyFreelancer() {
+        require(freelancers[msg.sender].addr != address(0x0), "Function restricted to freelancers");
+        _;
+    }
+
+    modifier onlyEvaluator() {
+        require(evaluators[msg.sender].addr != address(0x0), "Function restricted to evaluators");
+        _;
+    }
+       
+    modifier onlyFunder() {
+        require(funders[msg.sender].addr != address(0x0), "Function restricted to funders");
+        _;
+    }
+
+    function generateProductId() internal returns (uint) {
+        currentProductid++;
+        return currentProductid;
+    }
+
+// =========================================================================================
+
+    function fundProduct(uint tokens) onlyOwner() external{
+        customTokenContract.transferFrom(msg.sender, address(this), tokens);
+    }
+
+    function createProduct(
+        string memory desc,
+        uint devCost,
+        uint revCost,
+        string memory expertise) onlyManager() public
+        {
+          Product storage newProduct;
+          newProduct.id = generateProductId();
+          newProduct.description = desc;
+          newProduct.DEV = devCost;
+          newProduct.REV = revCost;
+          newProduct.expertise = expertise;
+          newProduct._manager = msg.sender;
+          newProduct._evaluator = address(0x0);
+          newProduct.phase = ProductStage.FundsNeeded;
+          activeProducts.push(newProduct);
     }
 }
