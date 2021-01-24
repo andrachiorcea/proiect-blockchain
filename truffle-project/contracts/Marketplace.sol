@@ -33,7 +33,7 @@ contract Marketplace {
         address addr;
     }
 
-    struct Product{
+    struct Product {
         uint id;
         string description;
         uint DEV;
@@ -64,8 +64,8 @@ contract Marketplace {
     mapping(address => Freelancer) freelancers;
     mapping(address => Evaluator) evaluators;
     mapping(address => Funder) funders;
-    mapping(address => mapping (uint => uint)) sponsorShares;
-    mapping(address => mapping (uint => uint)) freelancerShares;
+    mapping(address => mapping(uint => uint)) sponsorShares;
+    mapping(address => mapping(uint => uint)) freelancerShares;
 
     // OTHER FIELDS
     address owner;
@@ -84,8 +84,10 @@ contract Marketplace {
     ) {
         owner = msg.sender;
         customTokenContract = tokenContract;
-        require(_funders.length * numberTokens <= tokenContract.balanceOf(owner), 
-        "The tokens that you want to allocate are more than the total number of tokens in the contract");
+        require(
+            _funders.length * numberTokens <= tokenContract.balanceOf(owner),
+            "The tokens that you want to allocate are more than the total number of tokens in the contract"
+        );
 
         for (uint256 i = 0; i < _managers.length; i++) {
             managers[_managers[i].addr] = _managers[i];
@@ -118,44 +120,61 @@ contract Marketplace {
 
         Evaluator memory evaluator = evaluators[msg.sender];
 
-        for(uint i=0; i < _funders.length; i++){
-            funders[_funders[i].addr] = _funders[i];
-            tokenContract.approve(funders[_funders[i].addr].addr, numberTokens);
-            tokenContract.transfer(funders[_funders[i].addr].addr, numberTokens);
+        if (evaluator.reputation > 0) {
+            return "freelancer";
         }
+
         return "nothing";
     }
 
-// =====================================HELPERS=====================================
+    // =====================================HELPERS=====================================
 
-    modifier onlyOwner(){
-        require(msg.sender == owner, "Only the owner has rights for this operation; please dont waste gas");
+    modifier onlyOwner() {
+        require(
+            msg.sender == owner,
+            "Only the owner has rights for this operation; please dont waste gas"
+        );
         _;
     }
 
     modifier onlyManager() {
-        require(managers[msg.sender].addr != address(0x0), "Function rsetricted to managers");
+        require(
+            managers[msg.sender].addr != address(0x0),
+            "Function rsetricted to managers"
+        );
         _;
     }
 
     modifier onlyFreelancer() {
-        require(freelancers[msg.sender].addr != address(0x0), "Function restricted to freelancers");
+        require(
+            freelancers[msg.sender].addr != address(0x0),
+            "Function restricted to freelancers"
+        );
         _;
     }
 
     modifier onlyEvaluator() {
-        require(evaluators[msg.sender].addr != address(0x0), "Function restricted to evaluators");
+        require(
+            evaluators[msg.sender].addr != address(0x0),
+            "Function restricted to evaluators"
+        );
         _;
     }
-       
+
     modifier onlyFunder() {
-        require(funders[msg.sender].addr != address(0x0), "Function restricted to funders");
+        require(
+            funders[msg.sender].addr != address(0x0),
+            "Function restricted to funders"
+        );
         _;
     }
 
     modifier restrictByProductStatus(uint id, ProductStage stage) {
         Product memory prod = activeProducts[getProductIndexById(id)];
-        require(prod.phase == stage, "Operation not allowed in this stage of product development");
+        require(
+            prod.phase == stage,
+            "Operation not allowed in this stage of product development"
+        );
         _;
     }
 
@@ -164,13 +183,9 @@ contract Marketplace {
         return currentProductid;
     }
 
-    function getProductIndexById(uint id) public view
-        returns (uint idx) 
-    {
-        for (uint i = 0; i < activeProducts.length; i++)
-         {
-            if (activeProducts[i].id == id) 
-            {
+    function getProductIndexById(uint id) public view returns (uint idx) {
+        for (uint i = 0; i < activeProducts.length; i++) {
+            if (activeProducts[i].id == id) {
                 return i;
             }
         }
@@ -180,18 +195,17 @@ contract Marketplace {
     function deleteProduct(uint id) internal {
         Product[] memory copyProducts;
         uint idx = 0;
-        for (uint i=0; i<activeProducts.length; i++) {
+        for (uint i = 0; i < activeProducts.length; i++) {
             if (activeProducts[i].id != id) {
                 copyProducts[idx++] = activeProducts[i];
             }
         }
         activeProducts = copyProducts;
     }
-// =======================================REGISTER USER==========================================
-    
-    function registerManager(
-        string memory _name) public
-    {
+
+    // =======================================REGISTER USER==========================================
+
+    function registerManager(string memory _name) public {
         managers[msg.sender] = Manager({
             name: _name,
             reputation: 5,
@@ -199,41 +213,53 @@ contract Marketplace {
         });
     }
 
-// =======================================OPERATIONS==============================================
+    // =======================================OPERATIONS==============================================
 
     function createProduct(
         string memory desc,
         uint devCost,
         uint revCost,
-        string memory expertise) onlyManager() public
-        {
-          activeProducts.push(Product({
-              id: generateProductId(),
-              description: desc,
-              DEV: devCost,
-              REV: revCost,
-              expertise: expertise,
-              _manager: msg.sender,
-              _evaluator: address(0x0),
-              phase: ProductStage.FundsNeeded,
-              _funders: new address payable[](0),
-              _freelancers: new address payable[](0)
-          }));
+        string memory expertise
+    ) public onlyManager() {
+        activeProducts.push(
+            Product({
+                id: generateProductId(),
+                description: desc,
+                DEV: devCost,
+                REV: revCost,
+                expertise: expertise,
+                _manager: msg.sender,
+                _evaluator: address(0x0),
+                phase: ProductStage.FundsNeeded,
+                _funders: new address payable[](0),
+                _freelancers: new address payable[](0)
+            })
+        );
     }
 
-    function removeProduct(uint id) onlyManager() 
-    restrictByProductStatus(id, ProductStage.FundsNeeded) public {
-        Product memory prod = activeProducts[getProductIndexById(id)];
-        for (uint i = 0; i < prod._funders.length; i++) {
-            if (prod._funders[i] != address(0x0)) {
-                customTokenContract.approve(prod._funders[i], sponsorShares[prod._funders[i]][prod.id]);
-                customTokenContract.transferFrom(address(this), prod._funders[i], sponsorShares[prod._funders[i]][prod.id]);
-            }
-        }
-        deleteProduct(id);
-    }
+    // function removeProduct(uint id)
+    //     public
+    //     onlyManager()
+    //     restrictByProductStatus(id, ProductStage.FundsNeeded)
+    // {
+    //     Product memory prod = activeProducts[getProductIndexById(id)];
+    //     for (uint i = 0; i < prod._funders.length; i++) {
+    //         if (prod._funders[i] != address(0x0)) {
+    //             customTokenContract.approve(
+    //                 prod._funders[i],
+    //                 sponsorShares[prod._funders[i]][prod.id]
+    //             );
+    //             customTokenContract.transferFrom(
+    //                 address(this),
+    //                 prod._funders[i],
+    //                 sponsorShares[prod._funders[i]][prod.id]
+    //             );
+    //         }
+    //     }
+    //     deleteProduct(id);
+    // }
 
-    // function fundProduct(uint id, uint fundingSum) onlyFunder() 
+    // function fundProduct(uint id, uint fundingSum) onlyFunder()
     // restrictByProductStatus(id, ProductStage.FundsNeeded) public
     // {
     //     Product storage prod = activeProducts[getProductIndexById(id)];
@@ -260,5 +286,4 @@ contract Marketplace {
     //     }
     //   }
     // }
-
 }

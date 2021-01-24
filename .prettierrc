@@ -1,0 +1,13 @@
+{
+    "overrides": [
+      {
+        "files": "*.sol",
+        "options": {
+          "useTabs": true,
+          "singleQuote": false,
+          "bracketSpacing": true,
+          "explicitTypes": "no"
+        }
+      }
+    ]
+  }
