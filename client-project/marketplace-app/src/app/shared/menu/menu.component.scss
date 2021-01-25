@@ -1,0 +1,17 @@
+.menu-section {
+  margin-left: 30px;
+  margin-right: 30px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+
+  button {
+    margin-top: 10px;
+    width: 100%;
+  }
+  .title {
+    margin-left: auto;
+    margin-right: auto;
+  }
+}

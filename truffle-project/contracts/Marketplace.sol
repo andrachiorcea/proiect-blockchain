@@ -124,7 +124,7 @@ contract Marketplace {
             return "evaluator";
         }
         
-        return "nothing";
+        return "none";
     }
 
     // =====================================HELPERS=====================================

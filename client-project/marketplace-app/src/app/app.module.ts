@@ -1,3 +1,4 @@
+import { ProjectModule } from './modules/project/project.module';
 import { RegisterModule } from './modules/register/register.module';
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
@@ -8,17 +9,16 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { SharedModule } from './shared/shared.module';
 
 @NgModule({
-  declarations: [
-    AppComponent
-  ],
+  declarations: [AppComponent],
   imports: [
     BrowserModule,
     AppRoutingModule,
     RegisterModule,
     BrowserAnimationsModule,
-    SharedModule
+    SharedModule,
+    ProjectModule,
   ],
   providers: [],
-  bootstrap: [AppComponent]
+  bootstrap: [AppComponent],
 })
-export class AppModule { }
+export class AppModule {}

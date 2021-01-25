@@ -1,3 +1,37 @@
-<div>
-  Type: {{accountType}}
- </div>
+<div class="page">
+  <div *ngIf="accountType == 'none'" class="register-section">
+    <h2 class="title">Register</h2>
+    <form
+      class="register-form"
+      [formGroup]="registerUserGroup"
+      (ngSubmit)="onSubmit()"
+      [style.fontSize.px]="14"
+    >
+      <mat-form-field appearance="fill">
+        <mat-label>Role</mat-label>
+        <mat-select formControlName="role">
+          <mat-option value="freelancer">Freelancer</mat-option>
+          <mat-option value="manager">Manager</mat-option>
+          <mat-option value="evaluator">Evaluator</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="fill">
+        <mat-label>Name</mat-label>
+        <input formControlName="name" matInput />
+      </mat-form-field>
+      <mat-form-field appearance="fill">
+        <mat-label>Expertise</mat-label>
+        <input formControlName="expertise" matInput />
+      </mat-form-field>
+
+      <div class="buttons">
+        <button class="margin-right-10" mat-raised-button>Reset</button>
+        <button mat-raised-button color="primary" type="submit">Primary</button>
+      </div>
+    </form>
+  </div>
+
+  <div *ngIf="accountType != 'none'" class="register-section">
+    <h2 class="title">You are registered</h2>
+  </div>
+</div>
