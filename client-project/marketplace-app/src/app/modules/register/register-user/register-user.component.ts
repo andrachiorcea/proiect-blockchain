@@ -1,9 +1,6 @@
 import { AccountService } from './../../../services/account.service';
-import { RegisterServiceService } from '../../../services/register-service.service';
 import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
-import Roles from 'src/app/shared/Roles';
-import Freelancer from 'src/app/shared/models/Freelancer';
 import User from 'src/app/shared/models/User';
 
 @Component({
