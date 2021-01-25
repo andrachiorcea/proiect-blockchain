@@ -28,7 +28,7 @@ module.exports = async function(deployer, networks, accounts) {
             addr: accounts[3]
         }],
         [{
-            tokens: 0,
+            numberOfTokens: 1,
             addr: accounts[4]
         }],
         50

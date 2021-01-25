@@ -1,6 +1,6 @@
 import { async } from '@angular/core/testing';
 import { Injectable } from '@angular/core';
-import { stat } from 'fs';
+import { BehaviorSubject } from 'rxjs';
 const Web3 = require('web3');
 
 declare let require: any;
@@ -14,12 +14,13 @@ export class AccountService {
   web3: any;
   enable: any;
   account: string;
+  private accountChangedObserver = new BehaviorSubject<string>(null);
 
   constructor() {
     if (window.ethereum === undefined) {
       alert('Non-Ethereum browser detected. Install MetaMask');
     } else {
-      this.web3 = new Web3.providers.HttpProvider('http://localhost:8545');
+      this.web3 = new Web3.providers.HttpProvider('http://localhost:7545');
 
       console.log('transfer.service :: constructor :: window.ethereum');
       window.web3 = new Web3(this.web3);
@@ -27,6 +28,14 @@ export class AccountService {
       console.log(this.web3);
       this.enable = this.enableMetaMaskAccount();
     }
+  }
+
+  getAccountChangedObserver() {
+    return this.accountChangedObserver;
+  }
+
+  onAccountChanged(value: string) {
+    this.accountChangedObserver.next(value);
   }
 
   private async enableMetaMaskAccount(): Promise<any> {
@@ -77,14 +86,11 @@ export class AccountService {
             from: account
           });
       }).then(function(status) {
-        if (status) {
-          console.log(status);
-          return resolve({status: true});
-        }
+        resolve(status);
       }).catch(function(error) {
         console.log(error);
         return reject('transfer.service error');
       });
-    });
+    }) as Promise<string>;
   }
 }

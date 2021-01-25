@@ -10,28 +10,35 @@ import { Component, OnInit } from '@angular/core';
 export class RegisterUserComponent implements OnInit {
   account: string | undefined;
   balance: string | undefined;
-  constructor(private registerService: RegisterServiceService, private accountService: AccountService) { }
+  accountType: string;
+  constructor(private accountService: AccountService) { }
 
   ngOnInit() {
-    this.account = localStorage.getItem('currentAccount');
+    this.accountService.getAccounts().then(data => {
+      this.account = data[0];
+      this.getUserStatus(this.account);
+    });
 
-    this.getUserStatus();
-    this.getAccountAndBalance();
+    this.accountService.getAccountChangedObserver().subscribe(newAccount => {
+      this.account = newAccount;
+      this.getUserStatus(this.account);
+    })
+
   }
 
-  getUserStatus = () => {
-    this.accountService.getUserInfo(this.account).then(data => {
-      console.log(data);
+  getUserStatus = (account) => {
+    this.accountService.getUserInfo(account).then(data => {
+      this.accountType = data;
     })
   }
   getAccountAndBalance = () => {
-    const that = this;
-    this.registerService.getAccount().
-    then((retAccount: string[]) => {
-     console.log(retAccount);
-      console.log('transfer.components :: getAccountAndBalance :: that.user');
-    }).catch(function(error) {
-      console.log(error);
-    });
+    // const that = this;
+    // this.registerService.getAccount().
+    // then((retAccount: string[]) => {
+    //  console.log(retAccount);
+    //   console.log('transfer.components :: getAccountAndBalance :: that.user');
+    // }).catch(function(error) {
+    //   console.log(error);
+    // });
   }
 }
