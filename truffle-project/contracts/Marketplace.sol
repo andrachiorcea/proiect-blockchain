@@ -64,8 +64,8 @@ contract Marketplace {
     mapping(address => Freelancer) freelancers;
     mapping(address => Evaluator) evaluators;
     mapping(address => Funder) funders;
-    mapping(address => mapping(uint => uint)) sponsorShares;
-    mapping(address => mapping(uint => uint)) freelancerShares;
+    mapping (address => mapping (uint => uint)) funderShares;
+    mapping (address => mapping (uint => uint)) freelancerShares;
 
     // OTHER FIELDS
     address owner;
@@ -169,12 +169,25 @@ contract Marketplace {
         _;
     }
 
+    modifier onlyEvaluatorAndFreelancer() {
+        require(funders[msg.sender].addr != address(0x0) && evaluators[msg.sender].addr != address(0x0),
+        "Function restricted to evaluators and freelancers");
+        _;
+    }
+
     modifier restrictByProductStatus(uint id, ProductStage stage) {
         Product memory prod = activeProducts[getProductIndexById(id)];
         require(
             prod.phase == stage,
             "Operation not allowed in this stage of product development"
         );
+        _;
+    }
+
+    modifier isEligibleForEvaluatorInscription(uint productId) {
+        uint productIdx = getProductIndexById(productId);
+        require(activeProducts[productIdx]._manager != address(0x0), "The chosen product is not in the active products list");
+        require(activeProducts[productIdx]._evaluator == address(0x0), "The chosen product already has an evaluator");
         _;
     }
 
@@ -189,7 +202,7 @@ contract Marketplace {
                 return i;
             }
         }
-        return type(uint256).max;
+        revert("The product does not exist");
     }
 
     function deleteProduct(uint id) internal {
@@ -203,9 +216,24 @@ contract Marketplace {
         activeProducts = copyProducts;
     }
 
-    // =======================================REGISTER USER==========================================
+    function searchExistingFunderForProduct(Product calldata prod) public view returns (bool, uint){
+        for(uint i=0; i < prod._funders.length; i++){
+            if(prod._funders[i] == msg.sender) {
+                return (true, i);
+            }
+        }
+        return (false, 0);
+    }
 
-    function registerManager(string memory _name) public {
+// =======================================REGISTER USER==========================================
+    
+    function registerManager(
+        string calldata _name) external
+    {
+        require(bytes(_name).length != 0, "You must provide a name");
+        Manager memory manager = managers[msg.sender];
+        require(manager.reputation == 0, "You are already registered as a manager");
+
         managers[msg.sender] = Manager({
             name: _name,
             reputation: 5,
@@ -213,77 +241,172 @@ contract Marketplace {
         });
     }
 
-    // =======================================OPERATIONS==============================================
+    function registerFreelancer(
+        string calldata _name, string calldata _expertise, uint256 _reputation) external
+    {
+        Freelancer memory freelancer = freelancers[msg.sender];
+        require(freelancer.reputation == 0, "You are alreay registered as a freelancer");
+        require(bytes(_name).length > 0, "You must provide a name");
+        require(bytes(_expertise).length > 0, "You must provide an expertise");
 
-    function createProduct(
-        string memory desc,
-        uint devCost,
-        uint revCost,
-        string memory expertise
-    ) public onlyManager() {
-        activeProducts.push(
-            Product({
-                id: generateProductId(),
-                description: desc,
-                DEV: devCost,
-                REV: revCost,
-                expertise: expertise,
-                _manager: msg.sender,
-                _evaluator: address(0x0),
-                phase: ProductStage.FundsNeeded,
-                _funders: new address payable[](0),
-                _freelancers: new address payable[](0)
-            })
-        );
+        freelancers[msg.sender] = Freelancer({
+            name: _name,
+            reputation: 5,
+            addr: msg.sender,
+            expertise: _expertise,
+            chosenProductIds: new uint[](0)
+        });
     }
 
-    // function removeProduct(uint id)
-    //     public
-    //     onlyManager()
-    //     restrictByProductStatus(id, ProductStage.FundsNeeded)
-    // {
-    //     Product memory prod = activeProducts[getProductIndexById(id)];
-    //     for (uint i = 0; i < prod._funders.length; i++) {
-    //         if (prod._funders[i] != address(0x0)) {
-    //             customTokenContract.approve(
-    //                 prod._funders[i],
-    //                 sponsorShares[prod._funders[i]][prod.id]
-    //             );
-    //             customTokenContract.transferFrom(
-    //                 address(this),
-    //                 prod._funders[i],
-    //                 sponsorShares[prod._funders[i]][prod.id]
-    //             );
-    //         }
-    //     }
-    //     deleteProduct(id);
-    // }
+    function registerEvaluator(string calldata _name, string calldata _expertise) external 
+    {
+        Evaluator memory evaluator = evaluators[msg.sender];
+        require(evaluator.reputation == 0, "You are alreay registered as an evalatuator");
+        require(bytes(_name).length > 0, "You must provide a name");
+        require(bytes(_expertise).length > 0, "You must provide an expertise domain");
 
-    // function fundProduct(uint id, uint fundingSum) onlyFunder()
-    // restrictByProductStatus(id, ProductStage.FundsNeeded) public
-    // {
-    //     Product storage prod = activeProducts[getProductIndexById(id)];
-    //     if (prod.DEV + prod.REV > fundingSum) {
-    //         // finantatorul trimite mai putin decat suma necesara
-    //         tokenContract.transferFrom(msg.sender, address(this), fundingSum);
-    //         activeProducts[productId]._funders.push(msg.sender);
-    //         activeProducts[productId].funderShares[msg.sender] = fundingSum;
-    //         // inca nu s a atins limita, produsul ramane in aceeasi etapa
-    //     } else {
-    //      // daca un finantator trimite exact suma necesara
-    //      if (prod.DEV + prod.REV - fundingSum == 0) {
-    //         tokenContract.transferFrom(msg.sender, address(this), fundingSum);
-    //         activeProducts[productId]._funders.push(msg.sender);
-    //         activeProducts[productId].funderShares[msg.sender] = fundingSum;
-    //         // trece in urmatoarea etapa, nu se mai accepta funds
-    //         prod.phase = ProductPhase.WaitingForApplications;
-    //     } else {
-    //        // trimite mai mult decat suma necesara, se trimite diferenta inapoi
-    //        tokenContract.transferFrom(msg.sender, address(this), prod.DEV + prod.REV);
-    //        activeProducts[productId]._funders.push(msg.sender);
-    //        activeProducts[productId].funderShares[msg.sender] = fundingSum;
-    //        prod.phase = ProductPhase.WaitingForApplications;
-    //     }
-    //   }
-    // }
+        evaluators[msg.sender] = Evaluator({
+            name: _name,
+            reputation: 5,
+            addr: msg.sender,
+            expertise: _expertise
+        });
+    }
+
+    struct Funder{
+        uint numberOfTokens;
+        address addr;
+    }
+
+    function registerFunder(uint _numberOfTokens) {
+        Funder memory funder = funders[msg.sender];
+        require(_numberOfTokens > 0, "You must provide some tokens");
+        require(funder.numberOfTokens == 0, "You are alreay registered as a funder");
+
+        funders[msg.sender] = Funder ({
+            numberOfTokens: _numberOfTokens,
+            addr: msg.sender
+        });
+    }
+
+// =======================================OPERATIONS==============================================
+
+    function createProduct(
+        string calldata desc,
+        uint devCost,
+        uint revCost,
+        string calldata expertise) onlyManager() public
+        {
+          require(bytes(desc).length > 0, "You must provide a description");
+          require(bytes(expertise).length > 0, "You must provide an expertise");
+          require(devCost > 0, "Dev cost must be > 0"); 
+          require(revCost > 0, "Rev cost must be > 0");   
+          
+          activeProducts.push(Product({
+              id: generateProductId(),
+              description: desc,
+              DEV: devCost,
+              REV: revCost,
+              expertise: expertise,
+              _manager: msg.sender,
+              _evaluator: address(0x0),
+              phase: ProductStage.FundsNeeded,
+              _funders: new address payable[](0),
+              _freelancers: new address payable[](0)
+          }));
+    }
+
+    function removeProduct(uint id) onlyManager() 
+    restrictByProductStatus(id, ProductStage.FundsNeeded) public {
+        Product memory prod = activeProducts[getProductIndexById(id)];
+        for (uint i = 0; i < prod._funders.length; i++) {
+            if (prod._funders[i] != address(0x0)) {
+                customTokenContract.approve(prod._funders[i], funderShares[prod._funders[i]][prod.id]);
+                customTokenContract.transferFrom(address(this), prod._funders[i], funderShares[prod._funders[i]][prod.id]);
+            }
+        }
+        deleteProduct(id);
+    }
+
+    function fundProduct(uint productId, uint fundingSum) onlyFunder() 
+    restrictByProductStatus(productId, ProductStage.FundsNeeded) public
+    {
+        uint productIdx = getProductIndexById(productId);
+        Product storage prod = activeProducts[productIdx];
+        bool exists;
+        uint idx;
+        (exists, idx) = searchExistingFunderForProduct(prod);
+        if (prod.DEV + prod.REV >= fundingSum) {
+            customTokenContract.transferFrom(msg.sender, address(this), fundingSum);
+            if (exists) {
+                funderShares[msg.sender][productId] += fundingSum;
+            }
+            else {
+                activeProducts[productIdx]._funders.push(msg.sender);
+                funderShares[msg.sender][productId] = fundingSum;
+            }
+        } else {
+         if (prod.DEV + prod.REV == fundingSum) {
+            prod.phase = ProductStage.FreelancersNeeded;
+        } else {
+           uint neededFunds = fundingSum - prod.DEV + prod.REV;
+           customTokenContract.transferFrom(msg.sender, address(this), neededFunds);
+           if (exists) {
+                funderShares[msg.sender][productId] += neededFunds;
+            }
+            else {
+                activeProducts[productIdx]._funders.push(msg.sender);
+                funderShares[msg.sender][productId] = neededFunds;
+            }
+           prod.phase = ProductStage.FreelancersNeeded;
+        }
+      }
+    }
+
+    function withdrawFund(uint productId, uint withdrawSum) onlyFunder()
+     restrictByProductStatus(productId, ProductStage.FundsNeeded) public {
+        uint productIdx = getProductIndexById(productId);
+
+        require(funderShares[msg.sender][productIdx] > 0, "Cannot withdraw funds from this project");
+        require(withdrawSum <= funderShares[msg.sender][productIdx], "Sum to withdrawis bigger than contribution");
+
+        customTokenContract.transferFrom(address(this), msg.sender, withdrawSum);
+        if (withdrawSum == funderShares[msg.sender][productIdx]) {
+            delete funderShares[msg.sender][productIdx];
+        }
+    }
+
+    function consultFinancedProducts() onlyEvaluatorAndFreelancer() public view
+    returns (Product[] memory financedProducts) {
+        uint j = 0;
+        for (uint i = 0; i < activeProducts.length; i++) {
+            if (activeProducts[i].phase == ProductStage.FreelancersNeeded) {
+                financedProducts[j] = activeProducts[i];
+                j = j+1;
+            }
+        }
+        return financedProducts;
+    }
+
+    function registerToEvaluate(uint productId) 
+    onlyEvaluator() isEligibleForEvaluatorInscription(productId)
+    restrictByProductStatus(productId, ProductStage.FreelancersNeeded) public {
+        activeProducts[getProductIndexById(productId)]._evaluator = msg.sender;
+    }
+
+    function applyToWorkForProduct(uint productId, uint salary) public
+    onlyFreelancer() restrictByProductStatus(productId, ProductStage.FreelancersNeeded) {
+        uint productIdx = getProductIndexById(productId);
+        Product storage prod = activeProducts[productIdx];
+        require(activeProducts[productIdx]._manager != address(0x0), "The chosen product is not in the active products list");
+        require(prod.DEV <= salary, "We can't pay you this much!");
+
+        freelancerShares[msg.sender][productIdx] = salary;
+        freelancers[msg.sender].chosenProductIds.push(productId);
+    } 
+
+    // function acceptFreelancerTeam(uint productId) onlyManager()
+    // restrictByProductStatus(productId, ProductStage.FreelancersNeeded) public {
+        //de setat un minim de freelanceri + sa fie atinsa suma DEV
+    }
 }
