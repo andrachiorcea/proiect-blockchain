@@ -76,21 +76,12 @@ contract Marketplace {
 
     constructor(
         CustomToken tokenContract,
-<<<<<<< HEAD
-        Manager[] calldata _managers,
-        Freelancer[] calldata _freelancers,
-        Evaluator[] calldata _evaluators,
-        Funder[] calldata _funders,
-        uint numberTokens)
-    { 
-=======
         Manager[] memory _managers,
         Freelancer[] memory _freelancers,
         Evaluator[] memory _evaluators,
         Funder[] memory _funders,
-        uint256 numberTokens
-    ) {
->>>>>>> d9f394cd9f00d90fe99d7d9fe6031202a9771816
+        uint numberTokens)
+    { 
         owner = msg.sender;
         customTokenContract = tokenContract;
         require(_funders.length * numberTokens <= tokenContract.balanceOf(owner), 
@@ -127,11 +118,10 @@ contract Marketplace {
 
         Evaluator memory evaluator = evaluators[msg.sender];
 
-        for(uint i=0; i < _funders.length; i++){
-            funders[_funders[i].addr] = _funders[i];
-            tokenContract.approve(funders[_funders[i].addr].addr, numberTokens);
-            tokenContract.transfer(funders[_funders[i].addr].addr, numberTokens);
+        if (evaluator.reputation > 0) {
+            return "evaluator";
         }
+        
         return "nothing";
     }
 
@@ -199,8 +189,8 @@ contract Marketplace {
         revert("The product does not exist");
     }
 
+    Product[] internal copyProducts;
     function deleteProduct(uint id) internal {
-        Product[] memory copyProducts;
         uint idx = 0;
         for (uint i=0; i<activeProducts.length; i++) {
             if (activeProducts[i].id != id) {
@@ -210,7 +200,7 @@ contract Marketplace {
         activeProducts = copyProducts;
     }
 
-    function searchExistingFunderForProduct(Product calldata prod) public view returns (bool, uint){
+    function searchExistingFunderForProduct(Product memory prod) public view returns (bool, uint){
         for(uint i=0; i < prod._funders.length; i++){
             if(prod._funders[i] == msg.sender) {
                 return (true, i);
@@ -236,7 +226,7 @@ contract Marketplace {
     }
 
     function registerFreelancer(
-        string calldata _name, string calldata _expertise, uint256 _reputation) external
+        string calldata _name, string calldata _expertise) external
     {
         Freelancer memory freelancer = freelancers[msg.sender];
         require(freelancer.reputation == 0, "You are alreay registered as a freelancer");
@@ -267,12 +257,7 @@ contract Marketplace {
         });
     }
 
-    struct Funder{
-        uint numberOfTokens;
-        address addr;
-    }
-
-    function registerFunder(uint _numberOfTokens) {
+    function registerFunder(uint _numberOfTokens) public {
         Funder memory funder = funders[msg.sender];
         require(_numberOfTokens > 0, "You must provide some tokens");
         require(funder.numberOfTokens == 0, "You are alreay registered as a funder");
@@ -379,7 +364,7 @@ contract Marketplace {
                 j = j+1;
             }
         }
-        return financedProducts;
+        financedProducts = financedProducts;
     }
 
     function registerToEvaluate(uint productId) 
@@ -402,5 +387,5 @@ contract Marketplace {
     // function acceptFreelancerTeam(uint productId) onlyManager()
     // restrictByProductStatus(productId, ProductStage.FreelancersNeeded) public {
         //de setat un minim de freelanceri + sa fie atinsa suma DEV
-    }
+    // }
 }
