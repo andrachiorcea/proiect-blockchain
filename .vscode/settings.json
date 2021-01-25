@@ -17,7 +17,9 @@
     },
     "peacock.color": "#b46704",
     "cSpell.words": [
+        "Funder",
         "IERC",
+        "funders",
         "struct"
     ]
 }

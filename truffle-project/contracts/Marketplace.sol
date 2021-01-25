@@ -6,8 +6,7 @@ pragma experimental ABIEncoderV2;
 import "./CustomToken.sol";
 
 contract Marketplace {
-
-//SECTION DATA STRUCTURES
+    //SECTION DATA STRUCTURES
     struct Manager {
         string name;
         uint8 reputation;
@@ -19,18 +18,18 @@ contract Marketplace {
         uint8 reputation;
         string expertise;
         address addr;
-        uint[] chosenProductIds;
+        uint256[] chosenProductIds;
     }
 
-    struct Evaluator{
+    struct Evaluator {
         string name;
         uint8 reputation;
         string expertise;
         address addr;
     }
 
-    struct Funder{
-        uint numberOfTokens;
+    struct Funder {
+        uint256 numberOfTokens;
         address addr;
     }
 
@@ -47,17 +46,20 @@ contract Marketplace {
         ProductStage phase;
     }
 
-    enum ProductStage {  
-      FundsNeeded,        
-      FreelancersNeeded,  
-      FreelancersSelection,
-      InProgress,
-      WorkDone,
-      InApproval,
-      Done
+    enum ProductStage {
+        FundsNeeded,
+        FreelancersNeeded,
+        FreelancersSelection,
+        InProgress,
+        WorkDone,
+        InApproval,
+        Done
     }
 
-// MAPPINGS
+    // Events
+    event checkUserStatus(string _message);
+
+    // MAPPINGS
     mapping(address => Manager) managers;
     mapping(address => Freelancer) freelancers;
     mapping(address => Evaluator) evaluators;
@@ -65,7 +67,7 @@ contract Marketplace {
     mapping (address => mapping (uint => uint)) funderShares;
     mapping (address => mapping (uint => uint)) freelancerShares;
 
-// OTHER FIELDS
+    // OTHER FIELDS
     address owner;
     CustomToken public customTokenContract;
     Product[] activeProducts;
@@ -74,37 +76,63 @@ contract Marketplace {
 
     constructor(
         CustomToken tokenContract,
+<<<<<<< HEAD
         Manager[] calldata _managers,
         Freelancer[] calldata _freelancers,
         Evaluator[] calldata _evaluators,
         Funder[] calldata _funders,
         uint numberTokens)
     { 
+=======
+        Manager[] memory _managers,
+        Freelancer[] memory _freelancers,
+        Evaluator[] memory _evaluators,
+        Funder[] memory _funders,
+        uint256 numberTokens
+    ) {
+>>>>>>> d9f394cd9f00d90fe99d7d9fe6031202a9771816
         owner = msg.sender;
         customTokenContract = tokenContract;
         require(_funders.length * numberTokens <= tokenContract.balanceOf(owner), 
         "The tokens that you want to allocate are more than the total number of tokens in the contract");
 
-        for(uint i=0; i < _managers.length; i++){
+        for (uint256 i = 0; i < _managers.length; i++) {
             managers[_managers[i].addr] = _managers[i];
             managers[_managers[i].addr].reputation = 5;
         }
 
-        for(uint i=0; i < _freelancers.length; i++){
+        for (uint256 i = 0; i < _freelancers.length; i++) {
             freelancers[_freelancers[i].addr] = _freelancers[i];
             freelancers[_freelancers[i].addr].reputation = 5;
         }
 
-        for(uint i=0; i < _evaluators.length; i++){
+        for (uint256 i = 0; i < _evaluators.length; i++) {
             evaluators[_evaluators[i].addr] = _evaluators[i];
             evaluators[_evaluators[i].addr].reputation = 5;
         }
+    }
+
+    function getUserInfo() public view returns (string memory) {
+        Manager memory manager = managers[msg.sender];
+
+        if (manager.reputation > 0) {
+            return "manager";
+        }
+
+        Freelancer memory freelancer = freelancers[msg.sender];
+
+        if (freelancer.reputation > 0) {
+            return "freelancer";
+        }
+
+        Evaluator memory evaluator = evaluators[msg.sender];
 
         for(uint i=0; i < _funders.length; i++){
             funders[_funders[i].addr] = _funders[i];
             tokenContract.approve(funders[_funders[i].addr].addr, numberTokens);
             tokenContract.transfer(funders[_funders[i].addr].addr, numberTokens);
         }
+        return "nothing";
     }
 
 // =====================================HELPERS=====================================
