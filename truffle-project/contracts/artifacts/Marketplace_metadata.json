@@ -1,0 +1,795 @@
+{
+	"compiler": {
+		"version": "0.7.4+commit.3f05b770"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"inputs": [
+					{
+						"internalType": "contract CustomToken",
+						"name": "tokenContract",
+						"type": "address"
+					},
+					{
+						"components": [
+							{
+								"internalType": "string",
+								"name": "name",
+								"type": "string"
+							},
+							{
+								"internalType": "uint8",
+								"name": "reputation",
+								"type": "uint8"
+							},
+							{
+								"internalType": "address",
+								"name": "addr",
+								"type": "address"
+							}
+						],
+						"internalType": "struct Marketplace.Manager[]",
+						"name": "_managers",
+						"type": "tuple[]"
+					},
+					{
+						"components": [
+							{
+								"internalType": "string",
+								"name": "name",
+								"type": "string"
+							},
+							{
+								"internalType": "uint8",
+								"name": "reputation",
+								"type": "uint8"
+							},
+							{
+								"internalType": "string",
+								"name": "expertise",
+								"type": "string"
+							},
+							{
+								"internalType": "address",
+								"name": "addr",
+								"type": "address"
+							},
+							{
+								"internalType": "uint256[]",
+								"name": "chosenProductIds",
+								"type": "uint256[]"
+							}
+						],
+						"internalType": "struct Marketplace.Freelancer[]",
+						"name": "_freelancers",
+						"type": "tuple[]"
+					},
+					{
+						"components": [
+							{
+								"internalType": "string",
+								"name": "name",
+								"type": "string"
+							},
+							{
+								"internalType": "uint8",
+								"name": "reputation",
+								"type": "uint8"
+							},
+							{
+								"internalType": "string",
+								"name": "expertise",
+								"type": "string"
+							},
+							{
+								"internalType": "address",
+								"name": "addr",
+								"type": "address"
+							}
+						],
+						"internalType": "struct Marketplace.Evaluator[]",
+						"name": "_evaluators",
+						"type": "tuple[]"
+					},
+					{
+						"components": [
+							{
+								"internalType": "uint256",
+								"name": "numberOfTokens",
+								"type": "uint256"
+							},
+							{
+								"internalType": "address",
+								"name": "addr",
+								"type": "address"
+							}
+						],
+						"internalType": "struct Marketplace.Funder[]",
+						"name": "_funders",
+						"type": "tuple[]"
+					},
+					{
+						"internalType": "uint256",
+						"name": "numberTokens",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "constructor"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "_productId",
+						"type": "uint256"
+					}
+				],
+				"name": "ArbitrationNeeded",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "productId",
+						"type": "uint256"
+					}
+				],
+				"name": "ProductDevelopmentFinished",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "_message",
+						"type": "string"
+					}
+				],
+				"name": "checkUserStatus",
+				"type": "event"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "productId",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint8",
+						"name": "acceptedReputation",
+						"type": "uint8"
+					}
+				],
+				"name": "acceptFreelancerTeam",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "productId",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "salary",
+						"type": "uint256"
+					}
+				],
+				"name": "applyAsFreelancer",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "consultFinancedProducts",
+				"outputs": [
+					{
+						"components": [
+							{
+								"internalType": "uint256",
+								"name": "id",
+								"type": "uint256"
+							},
+							{
+								"internalType": "string",
+								"name": "description",
+								"type": "string"
+							},
+							{
+								"internalType": "uint256",
+								"name": "DEV",
+								"type": "uint256"
+							},
+							{
+								"internalType": "uint256",
+								"name": "REV",
+								"type": "uint256"
+							},
+							{
+								"internalType": "string",
+								"name": "expertise",
+								"type": "string"
+							},
+							{
+								"internalType": "bool",
+								"name": "wasArbitrationNeeded",
+								"type": "bool"
+							},
+							{
+								"internalType": "address",
+								"name": "_manager",
+								"type": "address"
+							},
+							{
+								"internalType": "address payable",
+								"name": "_evaluator",
+								"type": "address"
+							},
+							{
+								"internalType": "address payable[]",
+								"name": "_funders",
+								"type": "address[]"
+							},
+							{
+								"internalType": "address payable[]",
+								"name": "_freelancers",
+								"type": "address[]"
+							},
+							{
+								"internalType": "enum Marketplace.ProductStage",
+								"name": "phase",
+								"type": "uint8"
+							},
+							{
+								"internalType": "uint256",
+								"name": "applicationDeadline",
+								"type": "uint256"
+							},
+							{
+								"internalType": "uint256",
+								"name": "arbitrationDeadline",
+								"type": "uint256"
+							},
+							{
+								"internalType": "uint256",
+								"name": "finalizeDeadline",
+								"type": "uint256"
+							}
+						],
+						"internalType": "struct Marketplace.Product[]",
+						"name": "financedProducts",
+						"type": "tuple[]"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "desc",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "devCost",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "revCost",
+						"type": "uint256"
+					},
+					{
+						"internalType": "string",
+						"name": "expertise",
+						"type": "string"
+					}
+				],
+				"name": "createProduct",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "customTokenContract",
+				"outputs": [
+					{
+						"internalType": "contract CustomToken",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "productId",
+						"type": "uint256"
+					},
+					{
+						"internalType": "bool",
+						"name": "isAccepted",
+						"type": "bool"
+					}
+				],
+				"name": "doArbitration",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "productId",
+						"type": "uint256"
+					},
+					{
+						"internalType": "bool",
+						"name": "isAccepted",
+						"type": "bool"
+					}
+				],
+				"name": "evaluateWork",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "productId",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "fundingSum",
+						"type": "uint256"
+					}
+				],
+				"name": "fundProduct",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "getAwaitingFinanceProducts",
+				"outputs": [
+					{
+						"components": [
+							{
+								"internalType": "uint256",
+								"name": "id",
+								"type": "uint256"
+							},
+							{
+								"internalType": "string",
+								"name": "description",
+								"type": "string"
+							},
+							{
+								"internalType": "uint256",
+								"name": "DEV",
+								"type": "uint256"
+							},
+							{
+								"internalType": "uint256",
+								"name": "REV",
+								"type": "uint256"
+							},
+							{
+								"internalType": "string",
+								"name": "expertise",
+								"type": "string"
+							},
+							{
+								"internalType": "bool",
+								"name": "wasArbitrationNeeded",
+								"type": "bool"
+							},
+							{
+								"internalType": "address",
+								"name": "_manager",
+								"type": "address"
+							},
+							{
+								"internalType": "address payable",
+								"name": "_evaluator",
+								"type": "address"
+							},
+							{
+								"internalType": "address payable[]",
+								"name": "_funders",
+								"type": "address[]"
+							},
+							{
+								"internalType": "address payable[]",
+								"name": "_freelancers",
+								"type": "address[]"
+							},
+							{
+								"internalType": "enum Marketplace.ProductStage",
+								"name": "phase",
+								"type": "uint8"
+							},
+							{
+								"internalType": "uint256",
+								"name": "applicationDeadline",
+								"type": "uint256"
+							},
+							{
+								"internalType": "uint256",
+								"name": "arbitrationDeadline",
+								"type": "uint256"
+							},
+							{
+								"internalType": "uint256",
+								"name": "finalizeDeadline",
+								"type": "uint256"
+							}
+						],
+						"internalType": "struct Marketplace.Product[]",
+						"name": "awaitingFinance",
+						"type": "tuple[]"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "id",
+						"type": "uint256"
+					}
+				],
+				"name": "getProductIndexById",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "idx",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "getUserInfo",
+				"outputs": [
+					{
+						"internalType": "string",
+						"name": "",
+						"type": "string"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "productId",
+						"type": "uint256"
+					}
+				],
+				"name": "informManagerWorkDone",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "_name",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "_expertise",
+						"type": "string"
+					}
+				],
+				"name": "registerEvaluator",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "_name",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "_expertise",
+						"type": "string"
+					}
+				],
+				"name": "registerFreelancer",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "_numberOfTokens",
+						"type": "uint256"
+					}
+				],
+				"name": "registerFunder",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "_name",
+						"type": "string"
+					}
+				],
+				"name": "registerManager",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "productId",
+						"type": "uint256"
+					}
+				],
+				"name": "registerToEvaluate",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "id",
+						"type": "uint256"
+					}
+				],
+				"name": "removeProduct",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"components": [
+							{
+								"internalType": "uint256",
+								"name": "id",
+								"type": "uint256"
+							},
+							{
+								"internalType": "string",
+								"name": "description",
+								"type": "string"
+							},
+							{
+								"internalType": "uint256",
+								"name": "DEV",
+								"type": "uint256"
+							},
+							{
+								"internalType": "uint256",
+								"name": "REV",
+								"type": "uint256"
+							},
+							{
+								"internalType": "string",
+								"name": "expertise",
+								"type": "string"
+							},
+							{
+								"internalType": "bool",
+								"name": "wasArbitrationNeeded",
+								"type": "bool"
+							},
+							{
+								"internalType": "address",
+								"name": "_manager",
+								"type": "address"
+							},
+							{
+								"internalType": "address payable",
+								"name": "_evaluator",
+								"type": "address"
+							},
+							{
+								"internalType": "address payable[]",
+								"name": "_funders",
+								"type": "address[]"
+							},
+							{
+								"internalType": "address payable[]",
+								"name": "_freelancers",
+								"type": "address[]"
+							},
+							{
+								"internalType": "enum Marketplace.ProductStage",
+								"name": "phase",
+								"type": "uint8"
+							},
+							{
+								"internalType": "uint256",
+								"name": "applicationDeadline",
+								"type": "uint256"
+							},
+							{
+								"internalType": "uint256",
+								"name": "arbitrationDeadline",
+								"type": "uint256"
+							},
+							{
+								"internalType": "uint256",
+								"name": "finalizeDeadline",
+								"type": "uint256"
+							}
+						],
+						"internalType": "struct Marketplace.Product",
+						"name": "prod",
+						"type": "tuple"
+					}
+				],
+				"name": "searchExistingFunderForProduct",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					},
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "productId",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "withdrawSum",
+						"type": "uint256"
+					}
+				],
+				"name": "withdrawFund",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"localhost/contracts/Marketplace.sol": "Marketplace"
+		},
+		"evmVersion": "istanbul",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": false,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"localhost/app/node_modules/@openzeppelin/contracts/GSN/Context.sol": {
+			"keccak256": "0x8d3cb350f04ff49cfb10aef08d87f19dcbaecc8027b0bed12f3275cd12f38cf0",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://ded47ec7c96750f9bd04bbbc84f659992d4ba901cb7b532a52cd468272cf378f",
+				"dweb:/ipfs/QmfBrGtQP7rZEqEg6Wz6jh2N2Kukpj1z5v3CGWmAqrzm96"
+			]
+		},
+		"localhost/app/node_modules/@openzeppelin/contracts/access/Ownable.sol": {
+			"keccak256": "0xf7c39c7e6d06ed3bda90cfefbcbf2ddc32c599c3d6721746546ad64946efccaa",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://cb57a28e189cd8b05748db44bdd51d608e6f1364dd1b35ad921e1bc82c10631e",
+				"dweb:/ipfs/QmaWWTBbVu2pRR9XUbE4iC159NoP59cRF9ZJwhf4ghFN9i"
+			]
+		},
+		"localhost/app/node_modules/@openzeppelin/contracts/math/SafeMath.sol": {
+			"keccak256": "0x3b21f2c8d626de3b9925ae33e972d8bf5c8b1bffb3f4ee94daeed7d0679036e6",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://7f8d45329fecbf0836ad7543330c3ecd0f8d0ffa42d4016278c3eb2215fdcdfe",
+				"dweb:/ipfs/QmXWLT7GcnHtA5NiD6MFi2CV3EWJY4wv5mLNnypqYDrxL3"
+			]
+		},
+		"localhost/app/node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol": {
+			"keccak256": "0xcbd85c86627a47fd939f1f4ee3ba626575ff2a182e1804b29f5136394449b538",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://53c6a80c519bb9356aad28efa9a1ec31603860eb759d2dc57f545fcae1dd1aca",
+				"dweb:/ipfs/QmfRS6TtMNUHhvgLHXK21qKNnpn2S7g2Yd1fKaHKyFiJsR"
+			]
+		},
+		"localhost/app/node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol": {
+			"keccak256": "0x5f02220344881ce43204ae4a6281145a67bc52c2bb1290a791857df3d19d78f5",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://24427744bd3e6cb73c17010119af12a318289c0253a4d9acb8576c9fb3797b08",
+				"dweb:/ipfs/QmTLDqpKRBuxGxRAmjgXt9AkXyACW3MtKzi7PYjm5iMfGC"
+			]
+		},
+		"localhost/contracts/CustomToken.sol": {
+			"keccak256": "0x3e84c228ebefe7e56844c85448dfc0adec0da24ff7ad7ef8cb6f7da33bc3aa90",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://bdf18111fb329217a7b50d5daf42ab369824da2b387582c87aa052df3a71b8b8",
+				"dweb:/ipfs/QmRXHMYreRVEVojzzzVPi3g8BmVaBmpFoYUbVM2NNzsv2F"
+			]
+		},
+		"localhost/contracts/Marketplace.sol": {
+			"keccak256": "0x67513ea894d0fc12f8b145b3ebbf9483a012aa94d4264a61db788567a8db3321",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://00b9e1c9976c9f49f5ec4c1e96134d3269c22b8e6f2e55b9dc7444e655d70c26",
+				"dweb:/ipfs/QmY3BQFWf3Vju2khRuZyyi1iovbENui1YrLompSGnQTHvy"
+			]
+		}
+	},
+	"version": 1
+}

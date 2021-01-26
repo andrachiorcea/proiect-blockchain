@@ -111,7 +111,7 @@ contract Marketplace {
         }
     }
 
-    function getUserInfo() public view returns (string memory) {
+    function getUserInfo() external view returns (string memory) {
         Manager memory manager = managers[msg.sender];
 
         if (manager.reputation > 0) {
@@ -241,7 +241,7 @@ contract Marketplace {
 // =======================================REGISTER USER==========================================
     
     function registerManager(
-        string calldata _name) external
+        string memory _name) external
     {
         require(bytes(_name).length != 0, "You must provide a name");
         Manager memory manager = managers[msg.sender];
@@ -255,7 +255,7 @@ contract Marketplace {
     }
 
     function registerFreelancer(
-        string calldata _name, string calldata _expertise) external
+        string memory _name, string memory _expertise) external
     {
         Freelancer memory freelancer = freelancers[msg.sender];
         require(freelancer.reputation == 0, "You are alreay registered as a freelancer");
@@ -271,7 +271,7 @@ contract Marketplace {
         });
     }
 
-    function registerEvaluator(string calldata _name, string calldata _expertise) external 
+    function registerEvaluator(string memory _name, string memory _expertise) external 
     {
         Evaluator memory evaluator = evaluators[msg.sender];
         require(evaluator.reputation == 0, "You are alreay registered as an evalatuator");
@@ -286,7 +286,7 @@ contract Marketplace {
         });
     }
 
-    function registerFunder(uint _numberOfTokens) public {
+    function registerFunder(uint _numberOfTokens) external {
         Funder memory funder = funders[msg.sender];
         require(_numberOfTokens > 0, "You must provide some tokens");
         require(funder.numberOfTokens == 0, "You are alreay registered as a funder");
@@ -300,10 +300,10 @@ contract Marketplace {
 // =======================================OPERATIONS==============================================
 
     function createProduct(
-        string calldata desc,
+        string memory desc,
         uint devCost,
         uint revCost,
-        string calldata expertise) onlyManager() public  {
+        string memory expertise) onlyManager() external  {
           require(bytes(desc).length > 0, "You must provide a description");
           require(bytes(expertise).length > 0, "You must provide an expertise");
           require(devCost > 0, "Dev cost must be > 0"); 
@@ -328,7 +328,7 @@ contract Marketplace {
     }
 
     function removeProduct(uint id) onlyManager() 
-    restrictByProductStatus(id, ProductStage.FundsNeeded) public {
+    restrictByProductStatus(id, ProductStage.FundsNeeded) external {
         Product memory prod = activeProducts[getProductIndexById(id)];
         for (uint i = 0; i < prod._funders.length; i++) {
             if (prod._funders[i] != address(0x0)) {
@@ -340,7 +340,7 @@ contract Marketplace {
     }
 
     function fundProduct(uint productId, uint fundingSum) onlyFunder() 
-    restrictByProductStatus(productId, ProductStage.FundsNeeded) public
+    restrictByProductStatus(productId, ProductStage.FundsNeeded) external
     {
         uint productIdx = getProductIndexById(productId);
         Product storage prod = activeProducts[productIdx];
@@ -375,7 +375,7 @@ contract Marketplace {
     }
 
     function withdrawFund(uint productId, uint withdrawSum) onlyFunder()
-     restrictByProductStatus(productId, ProductStage.FundsNeeded) public {
+     restrictByProductStatus(productId, ProductStage.FundsNeeded) external {
         uint productIdx = getProductIndexById(productId);
 
         require(funderShares[msg.sender][productIdx] > 0, "Cannot withdraw funds from this project");
@@ -387,7 +387,7 @@ contract Marketplace {
         }
     }
 
-    function consultFinancedProducts() onlyEvaluatorAndFreelancer() public view
+    function consultFinancedProducts() onlyEvaluatorAndFreelancer() external view
     returns (Product[] memory financedProducts) {
         uint j = 0;
         for (uint i = 0; i < activeProducts.length; i++) {
@@ -399,7 +399,7 @@ contract Marketplace {
     }
 
     function getAwaitingFinanceProducts() onlyFreelancer() 
-    public view returns(Product[] memory awaitingFinance) {
+    external view returns(Product[] memory awaitingFinance) {
         uint j = 0;
         for (uint i = 0; i < activeProducts.length; i++) {
             if (activeProducts[i].phase == ProductStage.FundsNeeded) {
@@ -422,7 +422,7 @@ contract Marketplace {
 
     function registerToEvaluate(uint productId) 
     onlyEvaluator() isEligibleForEvaluatorInscription(productId)
-    restrictByProductStatus(productId, ProductStage.FreelancersSelection) public {
+    restrictByProductStatus(productId, ProductStage.FreelancersSelection) external {
         Product storage prod = activeProducts[getProductIndexById(productId)];
         if(prod.applicationDeadline < block.timestamp) {
             applyDeadlineExpired(productId);
@@ -432,7 +432,7 @@ contract Marketplace {
         }
     }
 
-    function applyAsFreelancer(uint productId, uint salary) public
+    function applyAsFreelancer(uint productId, uint salary) external
     onlyFreelancer() restrictByProductStatus(productId, ProductStage.FreelancersNeeded) {
         uint productIdx = getProductIndexById(productId);
         Product storage prod = activeProducts[productIdx];
@@ -449,7 +449,7 @@ contract Marketplace {
     } 
 
     function acceptFreelancerTeam(uint productId, uint8 acceptedReputation) onlyManager()
-    restrictByProductStatus(productId, ProductStage.FreelancersNeeded) public {
+    restrictByProductStatus(productId, ProductStage.FreelancersNeeded) external {
        // de setat un minim de freelanceri + sa fie atinsa suma DEV
         uint productIdx = getProductIndexById(productId);
         Product storage prod = activeProducts[productIdx];
@@ -474,7 +474,7 @@ contract Marketplace {
     }
 
     function informManagerWorkDone(uint productId) onlyFreelancer() 
-    restrictByProductStatus(productId, ProductStage.InProgress) public{
+    restrictByProductStatus(productId, ProductStage.InProgress) external{
         uint productIdx = getProductIndexById(productId);
         Product storage prod = activeProducts[productIdx];
 
@@ -493,7 +493,7 @@ contract Marketplace {
     }
 
     function evaluateWork(uint productId, bool isAccepted) onlyManager()  
-    restrictByProductStatus(productId, ProductStage.InApproval) public {
+    restrictByProductStatus(productId, ProductStage.InApproval) external {
         uint productIdx = getProductIndexById(productId);
         Product memory prod = activeProducts[productIdx];
         require(prod._manager == msg.sender, "You are not the manager for this task");
@@ -549,7 +549,7 @@ contract Marketplace {
     }
 
     function doArbitration(uint productId, bool isAccepted) onlyEvaluator()
-    restrictByProductStatus(productId, ProductStage.InApproval) public{
+    restrictByProductStatus(productId, ProductStage.InApproval) external{
         uint productIdx = getProductIndexById(productId);
         Product storage prod = activeProducts[productIdx];
         if (prod.arbitrationDeadline < block.timestamp) {
