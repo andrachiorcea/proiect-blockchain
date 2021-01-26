@@ -1,8 +1,11 @@
+import ApplyFunder from 'src/app/shared/models/ApplyFunder';
+import Product from 'src/app/shared/models/Product';
 import { async } from '@angular/core/testing';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import User from '../shared/models/User';
 import Roles from '../shared/Roles';
+import CreateProject from '../shared/models/CreateProject';
 const Web3 = require('web3');
 
 declare let require: any;
@@ -89,6 +92,23 @@ export class AccountService {
     }) as Promise<string>;
   }
 
+  public async getProjects() {
+    return new Promise((resolve, reject) => {
+      this.marketPlaceContract
+        .deployed()
+        .then((instance) => {
+          return instance.getProducts();
+        })
+        .then((data) => {
+          resolve(data);
+        })
+        .catch((error) => {
+          console.log(error);
+          return reject('transfer.service error');
+        });
+    }) as Promise<Product[]>;
+  }
+
   public async registerUser(user: User) {
     const role = user.role;
     return new Promise((resolve, reject) => {
@@ -105,11 +125,107 @@ export class AccountService {
               from: user.address,
             });
           }
-          if (role === Roles.Freelancer) {
+          if (role === Roles.Evaluator) {
             return instance.registerEvaluator(user.name, user.expertise, {
               from: user.address,
             });
           }
+
+          if (role === Roles.Funder) {
+            return instance.registerFunder(user.tokens, {
+              from: user.address,
+            });
+          }
+        })
+        .then((status) => {
+          resolve(status);
+        })
+        .catch((error) => {
+          console.log(error);
+          return reject('transfer.service error');
+        });
+    }) as Promise<string>;
+  }
+
+  public async createProject(project: CreateProject) {
+    return new Promise((resolve, reject) => {
+      this.marketPlaceContract
+        .deployed()
+        .then((instance) => {
+          return instance.createProject(
+            project.description,
+            project.devCost,
+            project.revCost,
+            project.expertise,
+            {
+              from: project.ownerAddress,
+            }
+          );
+        })
+        .then((status) => {
+          resolve(status);
+        })
+        .catch((error) => {
+          console.log(error);
+          return reject('transfer.service error');
+        });
+    }) as Promise<string>;
+  }
+
+  public async fundProject(applyFunder: ApplyFunder) {
+    return new Promise((resolve, reject) => {
+      this.marketPlaceContract
+        .deployed()
+        .then((instance) => {
+          return instance.fundProject(
+            applyFunder.projectId,
+            applyFunder.tokens,
+            {
+              from: applyFunder.address,
+            }
+          );
+        })
+        .then((status) => {
+          resolve(status);
+        })
+        .catch((error) => {
+          console.log(error);
+          return reject('transfer.service error');
+        });
+    }) as Promise<string>;
+  }
+
+  public async applyAsFreelancer(
+    productId: number,
+    salary: number,
+    account: string
+  ) {
+    return new Promise((resolve, reject) => {
+      this.marketPlaceContract
+        .deployed()
+        .then((instance) => {
+          return instance.applyAsFreelancer(productId, salary, {
+            from: account,
+          });
+        })
+        .then((status) => {
+          resolve(status);
+        })
+        .catch((error) => {
+          console.log(error);
+          return reject('transfer.service error');
+        });
+    }) as Promise<string>;
+  }
+
+  public async applyAsEvaluator(productId: number, account: string) {
+    return new Promise((resolve, reject) => {
+      this.marketPlaceContract
+        .deployed()
+        .then((instance) => {
+          return instance.registerToEvaluate(productId, {
+            from: account,
+          });
         })
         .then((status) => {
           resolve(status);

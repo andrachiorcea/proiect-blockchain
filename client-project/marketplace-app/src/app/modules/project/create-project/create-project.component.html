@@ -1,1 +1,41 @@
-<p>create-project works!</p>
+<div class="page">
+  <div *ngIf="role == 'manager'" class="register-section">
+    <h2 class="title">Create project</h2>
+    <form
+      class="register-form"
+      [formGroup]="createProjectGroup"
+      (ngSubmit)="onSubmit()"
+      [style.fontSize.px]="14"
+    >
+      <mat-form-field appearance="fill">
+        <mat-label>Description</mat-label>
+        <input formControlName="description" matInput />
+      </mat-form-field>
+      <mat-form-field appearance="fill">
+        <mat-label>Developers costs</mat-label>
+        <input formControlName="devCost" matInput />
+      </mat-form-field>
+
+      <mat-form-field appearance="fill">
+        <mat-label>Evaluator costs</mat-label>
+        <input formControlName="devCost" matInput />
+      </mat-form-field>
+
+      <mat-form-field appearance="fill">
+        <mat-label>Expertise</mat-label>
+        <input formControlName="expertise" matInput />
+      </mat-form-field>
+
+      <div class="buttons">
+        <button class="margin-right-10" mat-raised-button>Reset</button>
+        <button mat-raised-button color="primary" type="submit">Submit</button>
+      </div>
+    </form>
+  </div>
+
+  <div *ngIf="role != 'manager'" class="register-section">
+    <h2 class="title">
+      You are not a manager. Please register as a manager to create project
+    </h2>
+  </div>
+</div>

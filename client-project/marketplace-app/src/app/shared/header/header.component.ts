@@ -13,17 +13,18 @@ export class HeaderComponent implements OnInit {
   selectedAccount: string;
   selectedAccountRole: string;
   disableSelect = new FormControl(false);
-  options: FormGroup;
-  account: FormControl;
 
-  constructor(private accountService: AccountService, fb: FormBuilder) {
-    this.options = fb.group({
-      account: new FormControl(''),
-    });
-  }
+  options = new FormGroup({
+    account: new FormControl(''),
+  });
+
+  constructor(private accountService: AccountService) {}
 
   ngOnInit(): void {
-    this.accountService.getAccounts().then((data) => (this.accounts = data));
+    this.accountService.getAccounts().then((data) => {
+      this.accounts = data;
+      this.options.controls.account.setValue(this.accounts[0]);
+    });
     this.accountService.getAccountChangedObserver().subscribe((newAccount) => {
       this.accountService.getUserInfo(newAccount).then((data) => {
         if (data === Roles.Manager) {
@@ -32,9 +33,17 @@ export class HeaderComponent implements OnInit {
         if (data === Roles.Freelancer) {
           this.selectedAccountRole = Roles.FreelancerDisplayName;
         }
+        if (data === Roles.Evaluator) {
+          this.selectedAccountRole = Roles.EvaluatorDisplayName;
+        }
+        if (data === Roles.Funder) {
+          this.selectedAccountRole = Roles.FunderDisplayName;
+        }
         if (data === Roles.NotRegistered) {
           this.selectedAccountRole = Roles.NotRegisteredDisplayName;
         }
+        localStorage.setItem('currentRole', data);
+        localStorage.setItem('currentUser', newAccount);
       });
     });
   }

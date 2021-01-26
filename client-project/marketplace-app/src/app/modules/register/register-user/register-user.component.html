@@ -13,20 +13,37 @@
           <mat-option value="freelancer">Freelancer</mat-option>
           <mat-option value="manager">Manager</mat-option>
           <mat-option value="evaluator">Evaluator</mat-option>
+          <mat-option value="finance">Finance</mat-option>
         </mat-select>
       </mat-form-field>
-      <mat-form-field appearance="fill">
+      <mat-form-field
+        *ngIf="registerUserGroup.controls.role.value !== 'finance'"
+        appearance="fill"
+      >
         <mat-label>Name</mat-label>
         <input formControlName="name" matInput />
       </mat-form-field>
-      <mat-form-field appearance="fill">
+      <mat-form-field
+        appearance="fill"
+        *ngIf="registerUserGroup.controls.role.value !== 'finance'"
+      >
         <mat-label>Expertise</mat-label>
         <input formControlName="expertise" matInput />
       </mat-form-field>
 
+      <mat-form-field
+        appearance="fill"
+        *ngIf="registerUserGroup.controls.role.value == 'finance'"
+      >
+        <mat-label>Tokens</mat-label>
+        <input formControlName="tokens" matInput />
+      </mat-form-field>
+
       <div class="buttons">
         <button class="margin-right-10" mat-raised-button>Reset</button>
-        <button mat-raised-button color="primary" type="submit">Primary</button>
+        <button mat-raised-button color="primary" type="submit">
+          Register
+        </button>
       </div>
     </form>
   </div>

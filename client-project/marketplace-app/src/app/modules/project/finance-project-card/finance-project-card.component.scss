@@ -1,0 +1,12 @@
+.project-card {
+  width: 300px;
+}
+
+::ng-deep .mat-card-header-text {
+  margin: 0px 0px !important;
+}
+
+.card-apply {
+  display: flex;
+  margin-left: 5px;
+}

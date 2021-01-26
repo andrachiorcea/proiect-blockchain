@@ -3,6 +3,7 @@ import { ViewProjectsComponent } from './view-projects/view-projects.component';
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Routes, RouterModule } from '@angular/router';
+import { FinanceProjectsComponent } from './finance-projects/finance-projects.component';
 
 const routes: Routes = [
   {
@@ -12,6 +13,10 @@ const routes: Routes = [
   {
     path: 'create-project',
     component: CreateProjectComponent,
+  },
+  {
+    path: 'finance-projects',
+    component: FinanceProjectsComponent,
   },
 ];
 

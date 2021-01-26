@@ -16,6 +16,7 @@ export class RegisterUserComponent implements OnInit {
     name: new FormControl(''),
     reputation: new FormControl(''),
     expertise: new FormControl(''),
+    tokens: new FormControl(0),
   });
   constructor(private accountService: AccountService) {}
 
@@ -41,6 +42,7 @@ export class RegisterUserComponent implements OnInit {
     // Make sure to create a deep copy of the form-model
     const user: User = Object.assign({}, this.registerUserGroup.value);
     user.address = this.account;
+
     this.accountService.registerUser(user).then((data) => {
       console.log('register successfully');
     });

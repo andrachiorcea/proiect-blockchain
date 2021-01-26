@@ -129,6 +129,13 @@ contract Marketplace {
         if (evaluator.reputation > 0) {
             return "evaluator";
         }
+
+        
+        Funder memory funder = funders[msg.sender];
+
+        if (funder.numberOfTokens > 0) {
+            return "funder";
+        }
         
         return "none";
     }

@@ -4,6 +4,7 @@ class User {
   public name: string;
   public reputation: string;
   public expertise: string;
+  public tokens: string;
 }
 
 export default User;
