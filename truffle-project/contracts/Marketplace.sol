@@ -391,6 +391,17 @@ contract Marketplace {
         }
     }
 
+    function getAwaitingFinanceProducts() onlyFreelancer() 
+    public view returns(Product[] memory awaitingFinance) {
+        uint j = 0;
+        for (uint i = 0; i < activeProducts.length; i++) {
+            if (activeProducts[i].phase == ProductStage.FundsNeeded) {
+                awaitingFinance[j] = activeProducts[i];
+                j = j+1;
+            }
+        }
+    }
+
     function applyDeadlineExpired(uint id) internal {
         Product memory prod = activeProducts[getProductIndexById(id)];
         for (uint i = 0; i < prod._funders.length; i++) {
