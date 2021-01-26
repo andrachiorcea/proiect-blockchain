@@ -39,6 +39,7 @@ contract Marketplace {
         uint DEV;
         uint REV;
         string expertise;
+        bool wasArbitrationNeeded;
         address _manager;
         address payable _evaluator;
         address payable[] _funders;
@@ -51,13 +52,13 @@ contract Marketplace {
         FreelancersNeeded,
         FreelancersSelection,
         InProgress,
-        WorkDone,
         InApproval,
-        Done
+        WorkDone
     }
 
     // Events
     event checkUserStatus(string _message);
+    event ArbitrationNeeded(uint _productId);
 
     // MAPPINGS
     mapping(address => Manager) managers;
@@ -71,8 +72,10 @@ contract Marketplace {
     address owner;
     CustomToken public customTokenContract;
     Product[] activeProducts;
-    Product[] finishedProducts;
     uint currentProductid = 0;
+
+    //EVENTS
+     event ProductDevelopmentFinished(uint productId);
 
     constructor(
         CustomToken tokenContract,
@@ -307,7 +310,8 @@ contract Marketplace {
               _evaluator: address(0x0),
               phase: ProductStage.FundsNeeded,
               _funders: new address payable[](0),
-              _freelancers: new address payable[](0)
+              _freelancers: new address payable[](0),
+              wasArbitrationNeeded: false
           }));
     }
 
@@ -389,19 +393,122 @@ contract Marketplace {
         activeProducts[getProductIndexById(productId)]._evaluator = msg.sender;
     }
 
-    function applyToWorkForProduct(uint productId, uint salary) public
+    function applyAsFreelancer(uint productId, uint salary) public
     onlyFreelancer() restrictByProductStatus(productId, ProductStage.FreelancersNeeded) {
         uint productIdx = getProductIndexById(productId);
-        Product storage prod = activeProducts[productIdx];
+        Product memory prod = activeProducts[productIdx];
         require(activeProducts[productIdx]._manager != address(0x0), "The chosen product is not in the active products list");
         require(prod.DEV <= salary, "We can't pay you this much!");
-
+        require(keccak256(abi.encodePacked(prod.expertise)) == keccak256(abi.encodePacked(freelancers[msg.sender].expertise)), "You don't have expertis ein this area");
         freelancerShares[msg.sender][productIdx] = salary;
         freelancers[msg.sender].chosenProductIds.push(productId);
     } 
 
-    // function acceptFreelancerTeam(uint productId) onlyManager()
-    // restrictByProductStatus(productId, ProductStage.FreelancersNeeded) public {
-        //de setat un minim de freelanceri + sa fie atinsa suma DEV
-    // }
+    function acceptFreelancerTeam(uint productId, uint8 acceptedReputation) onlyManager()
+    restrictByProductStatus(productId, ProductStage.FreelancersNeeded) public {
+       // de setat un minim de freelanceri + sa fie atinsa suma DEV
+        uint productIdx = getProductIndexById(productId);
+        Product storage prod = activeProducts[productIdx];
+        require(prod._manager == msg.sender, "You are not the manager for this product");
+
+        address payable[] storage chosenFreelancers;
+        uint sum = prod.DEV;
+        uint i = 0;
+        while (i <= prod._freelancers.length) {
+            if(sum > 0 && freelancers[prod._freelancers[i]].reputation >= acceptedReputation) {
+              chosenFreelancers.push(prod._freelancers[i]);
+              sum -=  freelancerShares[prod._freelancers[i]][productIdx];
+            }
+            else {
+              delete freelancerShares[prod._freelancers[i]][productIdx];
+            }
+            i++;
+        }
+
+        prod._freelancers = chosenFreelancers;
+        prod.phase = ProductStage.InProgress;
+    }
+
+    /*
+    verifica ca e freelancer - d
+    vezi daca e asignat la produs - d
+    vezi daca produsul e in progress - d
+    trimite notificare la manager
+    adauga status pe produs - notification sent?
+    */
+    function informManagerWorkDone(uint productId) onlyFreelancer() 
+    restrictByProductStatus(productId, ProductStage.InProgress) public{
+        uint productIdx = getProductIndexById(productId);
+        Product storage prod = activeProducts[productIdx];
+
+        bool isWorkingOnProduct = false;
+        uint i = 0;
+         while (isWorkingOnProduct == false) {
+             if (prod._freelancers[i] == msg.sender) {
+                 isWorkingOnProduct = true;
+             }
+             i++;
+         }
+        
+        require(isWorkingOnProduct == true, "You are not a freelancer working for this product");
+        prod.phase = ProductStage.InApproval;
+        emit ProductDevelopmentFinished(prod.id);
+    }
+
+    function evaluateWork(uint productId, bool isAccepted) onlyManager()  
+    restrictByProductStatus(productId, ProductStage.InApproval) public {
+        uint productIdx = getProductIndexById(productId);
+        Product storage prod = activeProducts[productIdx];
+        require(prod._manager == msg.sender, "You are not the manager for this task");
+
+        if(isAccepted == true) {
+            acceptProductWork(productId);
+            emit ArbitrationNeeded(productId);
+        }
+        else {
+            prod.wasArbitrationNeeded = true;
+        }
+    }
+
+    function acceptProductWork(uint productId) internal {
+        uint productIdx = getProductIndexById(productId);
+        Product storage prod = activeProducts[productIdx];
+        for (uint i = 0; i < prod._freelancers.length; i++) {
+            if (freelancers[prod._freelancers[i]].reputation < 10) {
+                freelancers[prod._freelancers[i]].reputation++;
+            }
+            customTokenContract.transfer(prod._freelancers[i], freelancerShares[prod._freelancers[i]][productIdx]);
+        }
+        if(prod.wasArbitrationNeeded) {
+            managers[prod._manager].reputation--;
+            customTokenContract.transfer(prod._evaluator, prod.REV);
+        }
+        else {
+            managers[prod._manager].reputation++;
+            customTokenContract.transfer(prod._manager, prod.REV);
+        }
+        prod.phase = ProductStage.WorkDone;
+    }
+
+    function doArbitration(uint productId, bool isAccepted) onlyEvaluator()
+    restrictByProductStatus(productId, ProductStage.InApproval) public{
+        uint productIdx = getProductIndexById(productId);
+        Product storage prod = activeProducts[productIdx];
+        require(prod.wasArbitrationNeeded == true, "This product doesn't need approval");
+        require(prod._evaluator == msg.sender, "You are not the evaluator for the product");
+
+        if (isAccepted == true) {
+            acceptProductWork(productId);
+        }
+        else {
+            for (uint i = 0; i < prod._freelancers.length; i++) {
+                if (freelancers[prod._freelancers[i]].reputation > 0) {
+                    freelancers[prod._freelancers[i]].reputation--;
+                }
+            }
+            address payable[] storage emptyFreelancersList;
+            prod._freelancers = emptyFreelancersList;
+            prod.phase = ProductStage.FreelancersNeeded;
+        }
+    }
 }
