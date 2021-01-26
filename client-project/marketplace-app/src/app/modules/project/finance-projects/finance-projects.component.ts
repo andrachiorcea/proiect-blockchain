@@ -1,27 +1,18 @@
 import { AccountService } from './../../../services/account.service';
-import { Component, OnInit } from '@angular/core';
-import Product from 'src/app/shared/models/Product';
 import ProductCard from 'src/app/shared/models/ProductCard';
-import Roles from 'src/app/shared/Roles';
+import { Component, OnInit } from '@angular/core';
 
 @Component({
-  selector: 'app-view-projects',
-  templateUrl: './view-projects.component.html',
-  styleUrls: ['./view-projects.component.scss'],
+  selector: 'app-finance-projects',
+  templateUrl: './finance-projects.component.html',
+  styleUrls: ['./finance-projects.component.scss'],
 })
-export class ViewProjectsComponent implements OnInit {
+export class FinanceProjectsComponent implements OnInit {
   products: ProductCard[];
-  selectedAccount: string;
-  selectedAccountRole: string;
   role: string;
-
   constructor(private accountService: AccountService) {}
 
   ngOnInit(): void {
-    // this.accountService.getProjects().then((data) => {
-    //   this.products = data;
-    // });
-
     this.accountService.getAccountChangedObserver().subscribe((newAccount) => {
       this.accountService.getUserInfo(newAccount).then((data) => {
         this.role = data;
