@@ -466,13 +466,6 @@ contract Marketplace {
         prod.phase = ProductStage.InProgress;
     }
 
-    /*
-    verifica ca e freelancer - d
-    vezi daca e asignat la produs - d
-    vezi daca produsul e in progress - d
-    trimite notificare la manager
-    adauga status pe produs - notification sent?
-    */
     function informManagerWorkDone(uint productId) onlyFreelancer() 
     restrictByProductStatus(productId, ProductStage.InProgress) public{
         uint productIdx = getProductIndexById(productId);
