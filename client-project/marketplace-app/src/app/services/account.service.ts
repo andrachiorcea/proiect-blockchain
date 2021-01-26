@@ -1,3 +1,4 @@
+import ApplyFunder from 'src/app/shared/models/ApplyFunder';
 import Product from 'src/app/shared/models/Product';
 import { async } from '@angular/core/testing';
 import { Injectable } from '@angular/core';
@@ -160,6 +161,71 @@ export class AccountService {
               from: project.ownerAddress,
             }
           );
+        })
+        .then((status) => {
+          resolve(status);
+        })
+        .catch((error) => {
+          console.log(error);
+          return reject('transfer.service error');
+        });
+    }) as Promise<string>;
+  }
+
+  public async fundProject(applyFunder: ApplyFunder) {
+    return new Promise((resolve, reject) => {
+      this.marketPlaceContract
+        .deployed()
+        .then((instance) => {
+          return instance.fundProject(
+            applyFunder.projectId,
+            applyFunder.tokens,
+            {
+              from: applyFunder.address,
+            }
+          );
+        })
+        .then((status) => {
+          resolve(status);
+        })
+        .catch((error) => {
+          console.log(error);
+          return reject('transfer.service error');
+        });
+    }) as Promise<string>;
+  }
+
+  public async applyAsFreelancer(
+    productId: number,
+    salary: number,
+    account: string
+  ) {
+    return new Promise((resolve, reject) => {
+      this.marketPlaceContract
+        .deployed()
+        .then((instance) => {
+          return instance.applyAsFreelancer(productId, salary, {
+            from: account,
+          });
+        })
+        .then((status) => {
+          resolve(status);
+        })
+        .catch((error) => {
+          console.log(error);
+          return reject('transfer.service error');
+        });
+    }) as Promise<string>;
+  }
+
+  public async applyAsEvaluator(productId: number, account: string) {
+    return new Promise((resolve, reject) => {
+      this.marketPlaceContract
+        .deployed()
+        .then((instance) => {
+          return instance.registerToEvaluate(productId, {
+            from: account,
+          });
         })
         .then((status) => {
           resolve(status);

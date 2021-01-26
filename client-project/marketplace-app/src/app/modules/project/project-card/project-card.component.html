@@ -11,6 +11,7 @@
     </p>
   </mat-card-content>
   <mat-card-actions>
-    <button mat-button>Apply</button>
+    <button *ngIf="role == 'freelancer'" mat-button color="accent" (click)="applyAsEvaluator()">Apply as freelancer</button>
+    <button *ngIf="role == 'evaluator'"  mat-button (click)="applyAsFreelancer()">Apply as evaluator</button>
   </mat-card-actions>
 </mat-card>

@@ -1,3 +1,4 @@
+import { AccountService } from 'src/app/services/account.service';
 import { Component, Input, OnInit } from '@angular/core';
 import ProductCard from 'src/app/shared/models/ProductCard';
 
@@ -8,7 +9,25 @@ import ProductCard from 'src/app/shared/models/ProductCard';
 })
 export class ProjectCardComponent implements OnInit {
   @Input() product: ProductCard;
-  constructor() {}
+  @Input() role: string;
+  account: string;
+  constructor(private accountService: AccountService) {}
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    this.account = localStorage.getItem('currentAccount');
+    this.accountService.getAccountChangedObserver().subscribe((newAccount) => {
+      this.account = newAccount;
+    });
+  }
+
+  applyAsFreelancer() {
+    this.accountService.applyAsFreelancer(
+      this.product.productId,
+      20,
+      this.account
+    );
+  }
+  applyAsEvaluator() {
+    this.accountService.applyAsEvaluator(this.product.productId, this.account);
+  }
 }

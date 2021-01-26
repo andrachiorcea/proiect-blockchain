@@ -30,6 +30,7 @@ export class ViewProjectsComponent implements OnInit {
 
     this.products = [
       {
+        productId: 1,
         description: 'expertise expertise expertise',
         dev: 10,
         rev: 20,
@@ -37,6 +38,7 @@ export class ViewProjectsComponent implements OnInit {
         manager: 'teste test',
       },
       {
+        productId: 2,
         description: 'expertise expertise expertise',
         dev: 10,
         rev: 20,
@@ -44,6 +46,7 @@ export class ViewProjectsComponent implements OnInit {
         manager: 'teste test',
       },
       {
+        productId: 3,
         description: 'expertise expertise expertise',
         dev: 10,
         rev: 20,
@@ -51,6 +54,7 @@ export class ViewProjectsComponent implements OnInit {
         manager: 'teste test',
       },
       {
+        productId: 4,
         description: 'expertise expertise expertise',
         dev: 10,
         rev: 20,
