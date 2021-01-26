@@ -45,6 +45,9 @@ contract Marketplace {
         address payable[] _funders;
         address payable[] _freelancers;
         ProductStage phase;
+        uint applicationDeadline;
+        uint arbitrationDeadline;
+        uint finalizeDeadline;
     }
 
     enum ProductStage {
@@ -293,8 +296,7 @@ contract Marketplace {
         string calldata desc,
         uint devCost,
         uint revCost,
-        string calldata expertise) onlyManager() public
-        {
+        string calldata expertise) onlyManager() public  {
           require(bytes(desc).length > 0, "You must provide a description");
           require(bytes(expertise).length > 0, "You must provide an expertise");
           require(devCost > 0, "Dev cost must be > 0"); 
@@ -311,7 +313,10 @@ contract Marketplace {
               phase: ProductStage.FundsNeeded,
               _funders: new address payable[](0),
               _freelancers: new address payable[](0),
-              wasArbitrationNeeded: false
+              wasArbitrationNeeded: false,
+              applicationDeadline: block.timestamp + (1 days),
+              arbitrationDeadline: 0,
+              finalizeDeadline:  block.timestamp + (2 days)
           }));
     }
 
@@ -384,24 +389,45 @@ contract Marketplace {
                 j = j+1;
             }
         }
-        financedProducts = financedProducts;
+    }
+
+    function applyDeadlineExpired(uint id) internal {
+        Product memory prod = activeProducts[getProductIndexById(id)];
+        for (uint i = 0; i < prod._funders.length; i++) {
+            if (prod._funders[i] != address(0x0)) {
+                customTokenContract.approve(prod._funders[i], funderShares[prod._funders[i]][prod.id]);
+                customTokenContract.transferFrom(address(this), prod._funders[i], funderShares[prod._funders[i]][prod.id]);
+            }
+        }
+        deleteProduct(id);
     }
 
     function registerToEvaluate(uint productId) 
     onlyEvaluator() isEligibleForEvaluatorInscription(productId)
-    restrictByProductStatus(productId, ProductStage.FreelancersNeeded) public {
-        activeProducts[getProductIndexById(productId)]._evaluator = msg.sender;
+    restrictByProductStatus(productId, ProductStage.FreelancersSelection) public {
+        Product storage prod = activeProducts[getProductIndexById(productId)];
+        if(prod.applicationDeadline < block.timestamp) {
+            applyDeadlineExpired(productId);
+        }
+        else {
+            prod._evaluator = msg.sender;
+        }
     }
 
     function applyAsFreelancer(uint productId, uint salary) public
     onlyFreelancer() restrictByProductStatus(productId, ProductStage.FreelancersNeeded) {
         uint productIdx = getProductIndexById(productId);
-        Product memory prod = activeProducts[productIdx];
-        require(activeProducts[productIdx]._manager != address(0x0), "The chosen product is not in the active products list");
-        require(prod.DEV <= salary, "We can't pay you this much!");
-        require(keccak256(abi.encodePacked(prod.expertise)) == keccak256(abi.encodePacked(freelancers[msg.sender].expertise)), "You don't have expertis ein this area");
-        freelancerShares[msg.sender][productIdx] = salary;
-        freelancers[msg.sender].chosenProductIds.push(productId);
+        Product storage prod = activeProducts[productIdx];
+        if(prod.applicationDeadline < block.timestamp) {
+            applyDeadlineExpired(productId);
+        }
+        else {
+            require(activeProducts[productIdx]._manager != address(0x0), "The chosen product is not in the active products list");
+            require(prod.DEV <= salary, "We can't pay you this much!");
+            require(keccak256(abi.encodePacked(prod.expertise)) == keccak256(abi.encodePacked(freelancers[msg.sender].expertise)), "You don't have expertis ein this area");
+            freelancerShares[msg.sender][productIdx] = salary;
+            freelancers[msg.sender].chosenProductIds.push(productId);
+        }
     } 
 
     function acceptFreelancerTeam(uint productId, uint8 acceptedReputation) onlyManager()
@@ -458,19 +484,20 @@ contract Marketplace {
     function evaluateWork(uint productId, bool isAccepted) onlyManager()  
     restrictByProductStatus(productId, ProductStage.InApproval) public {
         uint productIdx = getProductIndexById(productId);
-        Product storage prod = activeProducts[productIdx];
+        Product memory prod = activeProducts[productIdx];
         require(prod._manager == msg.sender, "You are not the manager for this task");
 
         if(isAccepted == true) {
             acceptProductWork(productId);
-            emit ArbitrationNeeded(productId);
         }
         else {
             prod.wasArbitrationNeeded = true;
+            emit ArbitrationNeeded(productId);
+            prod.arbitrationDeadline = block.timestamp + (1 days); // needs to be configured with float-point values;
         }
     }
 
-    function acceptProductWork(uint productId) internal {
+    function acceptProductWork(uint productId) finalizeDeadlineExpired(productId) internal {
         uint productIdx = getProductIndexById(productId);
         Product storage prod = activeProducts[productIdx];
         for (uint i = 0; i < prod._freelancers.length; i++) {
@@ -490,10 +517,45 @@ contract Marketplace {
         prod.phase = ProductStage.WorkDone;
     }
 
+    modifier finalizeDeadlineExpired (uint productId) {
+        uint productIdx = getProductIndexById(productId);
+        Product storage prod = activeProducts[productIdx];
+        require (
+            prod.phase != ProductStage.WorkDone,
+            "Operation not allowed in this stage of product development"
+        );
+        if (prod.finalizeDeadline < block.timestamp) {
+            if (managers[prod._manager].reputation > 0) {
+                managers[prod._manager].reputation--;
+            }
+            for (uint i = 0; i < prod._funders.length; i++) {
+                customTokenContract.approve(prod._funders[i], funderShares[prod._funders[i]][prod.id] + (prod.DEV) * (funderShares[prod._funders[i]][prod.id]/prod.REV));
+                customTokenContract.transferFrom(address(this), prod._funders[i], funderShares[prod._funders[i]][prod.id] + (prod.DEV) * (funderShares[prod._funders[i]][prod.id]/prod.REV));
+            }
+            require(prod.finalizeDeadline > block.timestamp, "Expired working deadline");
+        }
+        _;
+    }
+
     function doArbitration(uint productId, bool isAccepted) onlyEvaluator()
     restrictByProductStatus(productId, ProductStage.InApproval) public{
         uint productIdx = getProductIndexById(productId);
         Product storage prod = activeProducts[productIdx];
+        if (prod.arbitrationDeadline < block.timestamp) {
+            if (evaluators[prod._evaluator].reputation > 0) {
+                evaluators[prod._evaluator].reputation--;
+            }
+            for (uint i = 0; i < prod._freelancers.length; i++) {
+                customTokenContract.approve(prod._freelancers[i], freelancerShares[prod._freelancers[i]][prod.id]/2);
+                customTokenContract.transferFrom(owner, prod._freelancers[i], freelancerShares[prod._freelancers[i]][prod.id]/2);
+            }
+
+            for (uint i = 0; i < prod._funders.length; i++) {
+                customTokenContract.approve(prod._funders[i], funderShares[prod._funders[i]][prod.id] + (prod.DEV/2) * (funderShares[prod._funders[i]][prod.id]/prod.REV));
+                customTokenContract.transferFrom(address(this), prod._funders[i], funderShares[prod._funders[i]][prod.id] + (prod.DEV/2) * (funderShares[prod._funders[i]][prod.id]/prod.REV));
+            }
+        }
+        else {
         require(prod.wasArbitrationNeeded == true, "This product doesn't need approval");
         require(prod._evaluator == msg.sender, "You are not the evaluator for the product");
 
@@ -509,6 +571,9 @@ contract Marketplace {
             address payable[] storage emptyFreelancersList;
             prod._freelancers = emptyFreelancersList;
             prod.phase = ProductStage.FreelancersNeeded;
+            prod.applicationDeadline = block.timestamp + (1 days);
+            prod.finalizeDeadline = block.timestamp + (2 days);
+        }
         }
     }
 }
