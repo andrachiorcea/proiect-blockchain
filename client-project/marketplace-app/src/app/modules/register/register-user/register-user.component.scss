@@ -1,31 +1,26 @@
-section {
-  display: table;
-}
-
-.example-label {
-  display: table-cell;
-  font-size: 14px;
-  margin-left: 8px;
-  min-width: 120px;
-}
-
-.example-button-row {
-  display: table-cell;
-  width: 490px;
-}
-
-.example-button-row .mat-button-base {
-  margin: 8px 8px 8px 0;
-}
-
-.example-flex-container {
+.page {
   display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
+  width: calc(100vw - 200px);
+  flex-direction: column;
+
+  .register-section {
+    display: flex;
+    flex-direction: column;
+    width: 506px;
+    margin-left: auto;
+    margin-right: auto;
+
+    .buttons {
+      display: flex;
+      justify-content: flex-end;
+    }
+    .register-form {
+      display: flex;
+      flex-direction: column;
+    }
+  }
 }
 
-.example-button-container {
-  display: flex;
-  justify-content: center;
-  width: 120px;
+.margin-right-10 {
+  margin-right: 10px;
 }

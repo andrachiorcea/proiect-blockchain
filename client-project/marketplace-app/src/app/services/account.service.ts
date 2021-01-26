@@ -1,6 +1,8 @@
 import { async } from '@angular/core/testing';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
+import User from '../shared/models/User';
+import Roles from '../shared/Roles';
 const Web3 = require('web3');
 
 declare let require: any;
@@ -8,14 +10,14 @@ declare let window: any;
 const tokenAbi = require('../../../../../truffle-project/build/contracts/Marketplace.json');
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AccountService {
   web3: any;
   enable: any;
   account: string;
   private accountChangedObserver = new BehaviorSubject<string>(null);
-
+  marketPlaceContract: any;
   constructor() {
     if (window.ethereum === undefined) {
       alert('Non-Ethereum browser detected. Install MetaMask');
@@ -27,6 +29,10 @@ export class AccountService {
       console.log('transfer.service :: constructor :: this.web3');
       console.log(this.web3);
       this.enable = this.enableMetaMaskAccount();
+
+      const contract = require('@truffle/contract');
+      this.marketPlaceContract = contract(tokenAbi);
+      this.marketPlaceContract.setProvider(this.web3);
     }
   }
 
@@ -46,15 +52,12 @@ export class AccountService {
     return Promise.resolve(enable);
   }
 
-
   public async getAccounts(): Promise<string[]> {
-    console.log('transfer.service :: getAccount :: start');
-    let getAccount = await new Promise((resolve, reject) => {
+    return new Promise((resolve, reject) => {
       console.log('transfer.service :: getAccount :: eth');
       console.log(window.web3.eth);
-      window.web3.eth.getAccounts((err: null, accounts: string | any[]) => {
+      window.web3.eth.getAccounts((err: null, accounts: string[]) => {
         console.log('transfer.service :: getAccount: retAccount');
-        console.log(accounts);
         if (accounts.length > 0) {
           resolve(accounts);
         } else {
@@ -64,33 +67,57 @@ export class AccountService {
           reject(['Error retrieving account']);
         }
       });
-    }) as unknown as Promise<string[]>;
-
-    return Promise.resolve(getAccount);
+    }) as Promise<string[]>;
   }
 
-
   public async getUserInfo(account: string) {
-    const that = this;
     return new Promise((resolve, reject) => {
-      console.log('transfer.service :: transferEther :: tokenAbi');
-      console.log(tokenAbi);
-      const contract = require('@truffle/contract');
-      const marketPlaceContract = contract(tokenAbi);
-      marketPlaceContract.setProvider(that.web3);
-      console.log('transfer.service :: transferEther :: transferContract');
-      console.log(marketPlaceContract);
-      marketPlaceContract.deployed().then(function(instance) {
-        return instance.getUserInfo(
-          {
-            from: account
+      this.marketPlaceContract
+        .deployed()
+        .then((instance) => {
+          return instance.getUserInfo({
+            from: account,
           });
-      }).then(function(status) {
-        resolve(status);
-      }).catch(function(error) {
-        console.log(error);
-        return reject('transfer.service error');
-      });
+        })
+        .then((status) => {
+          resolve(status);
+        })
+        .catch((error) => {
+          console.log(error);
+          return reject('transfer.service error');
+        });
+    }) as Promise<string>;
+  }
+
+  public async registerUser(user: User) {
+    const role = user.role;
+    return new Promise((resolve, reject) => {
+      this.marketPlaceContract
+        .deployed()
+        .then((instance) => {
+          if (role === Roles.Freelancer) {
+            return instance.registerFreelancer(user.name, user.expertise, {
+              from: user.address,
+            });
+          }
+          if (role === Roles.Manager) {
+            return instance.registerManager(user.name, {
+              from: user.address,
+            });
+          }
+          if (role === Roles.Freelancer) {
+            return instance.registerEvaluator(user.name, user.expertise, {
+              from: user.address,
+            });
+          }
+        })
+        .then((status) => {
+          resolve(status);
+        })
+        .catch((error) => {
+          console.log(error);
+          return reject('transfer.service error');
+        });
     }) as Promise<string>;
   }
 }
