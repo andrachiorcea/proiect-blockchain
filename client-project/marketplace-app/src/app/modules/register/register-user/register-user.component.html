@@ -13,11 +13,11 @@
           <mat-option value="freelancer">Freelancer</mat-option>
           <mat-option value="manager">Manager</mat-option>
           <mat-option value="evaluator">Evaluator</mat-option>
-          <mat-option value="finance">Finance</mat-option>
+          <mat-option value="funder">Funder</mat-option>
         </mat-select>
       </mat-form-field>
       <mat-form-field
-        *ngIf="registerUserGroup.controls.role.value !== 'finance'"
+        *ngIf="registerUserGroup.controls.role.value !== 'funder'"
         appearance="fill"
       >
         <mat-label>Name</mat-label>
@@ -25,7 +25,7 @@
       </mat-form-field>
       <mat-form-field
         appearance="fill"
-        *ngIf="registerUserGroup.controls.role.value !== 'finance'"
+        *ngIf="registerUserGroup.controls.role.value !== 'funder'"
       >
         <mat-label>Expertise</mat-label>
         <input formControlName="expertise" matInput />
@@ -33,10 +33,10 @@
 
       <mat-form-field
         appearance="fill"
-        *ngIf="registerUserGroup.controls.role.value == 'finance'"
+        *ngIf="registerUserGroup.controls.role.value == 'funder'"
       >
         <mat-label>Tokens</mat-label>
-        <input formControlName="tokens" matInput />
+        <input type="number" formControlName="tokens" matInput />
       </mat-form-field>
 
       <div class="buttons">

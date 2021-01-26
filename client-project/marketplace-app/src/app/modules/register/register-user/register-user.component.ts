@@ -2,6 +2,7 @@ import { AccountService } from './../../../services/account.service';
 import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import User from 'src/app/shared/models/User';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-register-user',
@@ -18,7 +19,10 @@ export class RegisterUserComponent implements OnInit {
     expertise: new FormControl(''),
     tokens: new FormControl(0),
   });
-  constructor(private accountService: AccountService) {}
+  constructor(
+    private accountService: AccountService,
+    private snackBar: MatSnackBar
+  ) {}
 
   ngOnInit() {
     this.accountService.getAccounts().then((data) => {
@@ -43,8 +47,19 @@ export class RegisterUserComponent implements OnInit {
     const user: User = Object.assign({}, this.registerUserGroup.value);
     user.address = this.account;
 
-    this.accountService.registerUser(user).then((data) => {
-      console.log('register successfully');
-    });
+    this.accountService.registerUser(user).then(
+      (data) => {
+        this.snackBar.open('Register successfully', 'Register', {
+          duration: 2000,
+        });
+        localStorage.setItem('currentAccount', this.account);
+        this.accountService.onAccountChanged(this.account);
+      },
+      (error) => {
+        this.snackBar.open(error, 'Register failed', {
+          duration: 2000,
+        });
+      }
+    );
   }
 }

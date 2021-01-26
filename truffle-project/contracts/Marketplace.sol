@@ -183,7 +183,7 @@ contract Marketplace {
     }
 
     modifier onlyEvaluatorAndFreelancer() {
-        require(funders[msg.sender].addr != address(0x0) && evaluators[msg.sender].addr != address(0x0),
+        require(freelancers[msg.sender].addr != address(0x0) || evaluators[msg.sender].addr != address(0x0),
         "Function restricted to evaluators and freelancers");
         _;
     }
@@ -388,7 +388,8 @@ contract Marketplace {
     }
 
     function consultFinancedProducts() onlyEvaluatorAndFreelancer() public view
-    returns (Product[] memory financedProducts) {
+    returns (Product[] memory) {
+        Product[] memory financedProducts = new Product[](activeProducts.length);
         uint j = 0;
         for (uint i = 0; i < activeProducts.length; i++) {
             if (activeProducts[i].phase == ProductStage.FreelancersNeeded) {
@@ -396,17 +397,20 @@ contract Marketplace {
                 j = j+1;
             }
         }
+        return financedProducts;
     }
 
-    function getAwaitingFinanceProducts() onlyFreelancer() 
-    public view returns(Product[] memory awaitingFinance) {
+    function getAwaitingFinanceProducts() onlyFunder() 
+    public view returns(Product[] memory) {
         uint j = 0;
+        Product[] memory awaitingFinance = new Product[](activeProducts.length);
         for (uint i = 0; i < activeProducts.length; i++) {
             if (activeProducts[i].phase == ProductStage.FundsNeeded) {
                 awaitingFinance[j] = activeProducts[i];
                 j = j+1;
             }
         }
+        return awaitingFinance;
     }
 
     function applyDeadlineExpired(uint id) internal {

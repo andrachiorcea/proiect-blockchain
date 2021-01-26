@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { AccountService } from 'src/app/services/account.service';
 import CreateProject from 'src/app/shared/models/CreateProject';
 
@@ -17,14 +18,20 @@ export class CreateProjectComponent implements OnInit {
     revCost: new FormControl(0),
     expertise: new FormControl(''),
   });
-  constructor(private accountService: AccountService) {}
+  constructor(
+    private accountService: AccountService,
+    private snackBar: MatSnackBar
+  ) {}
 
   ngOnInit() {
-    this.accountService.getAccounts().then((data) => {
-      this.account = data[0];
-      this.accountService.getUserInfo(this.account).then((data) => {
-        this.role = data;
+    this.account = localStorage.getItem('currentAccount');
+    if (this.account == null) {
+      this.snackBar.open('Refresh the page immediately', 'Refresh', {
+        duration: 2000,
       });
+    }
+    this.accountService.getUserInfo(this.account).then((data) => {
+      this.role = data;
     });
 
     this.accountService.getAccountChangedObserver().subscribe((newAccount) => {
@@ -43,8 +50,18 @@ export class CreateProjectComponent implements OnInit {
     );
     project.ownerAddress = this.account;
 
-    this.accountService.createProject(project).then((data) => {
-      console.log('register successfully');
-    });
+    this.accountService.createProject(project).then(
+      (data) => {
+        this.snackBar.open('Project created successfully', 'Project', {
+          duration: 2000,
+        });
+        this.createProjectGroup.reset();
+      },
+      (error) => {
+        this.snackBar.open(error, 'Creation failed', {
+          duration: 2000,
+        });
+      }
+    );
   }
 }

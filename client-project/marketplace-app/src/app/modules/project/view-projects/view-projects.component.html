@@ -1,5 +1,5 @@
 <div class="page">
-  <div class="content" *ngIf="role != 'none'">
+  <div class="content" *ngIf="role == 'freelancer' || role == 'evaluator'">
     <h2>Projects</h2>
     <div class="project-section">
       <app-project-card
@@ -9,7 +9,7 @@
       ></app-project-card>
     </div>
   </div>
-  <div class="content" *ngIf="role == 'none'">
-    <h2>You are not registered. Please register to view the projects</h2>
+  <div class="content" *ngIf="role != 'freelancer' && role != 'evaluator'">
+    <h2>This page is restricted only to Freelancers and Evaluator</h2>
   </div>
 </div>
