@@ -5,6 +5,7 @@
       <app-finance-project-card
         *ngFor="let product of products"
         [product]="product"
+        (financeAppliedEmitter)="onFunderApplied($event)"
       ></app-finance-project-card>
     </div>
   </div>

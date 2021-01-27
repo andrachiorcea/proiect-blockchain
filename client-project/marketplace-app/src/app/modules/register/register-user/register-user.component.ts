@@ -49,6 +49,7 @@ export class RegisterUserComponent implements OnInit {
 
     this.accountService.registerUser(user).then(
       (data) => {
+        this.registerUserGroup.reset();
         this.snackBar.open('Register successfully', 'Register', {
           duration: 2000,
         });

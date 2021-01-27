@@ -10,7 +10,7 @@ import Roles from 'src/app/shared/Roles';
   styleUrls: ['./view-projects.component.scss'],
 })
 export class ViewProjectsComponent implements OnInit {
-  products: ProductCard[];
+  products: ProductCard[] = [];
   selectedAccount: string;
   selectedAccountRole: string;
   role: string;
@@ -22,16 +22,33 @@ export class ViewProjectsComponent implements OnInit {
     this.getProjects();
 
     this.accountService.getAccountChangedObserver().subscribe((newAccount) => {
-      this.account = newAccount;
-      this.accountService.getUserInfo(newAccount).then((data) => {
-        this.role = data;
-      });
+      if (newAccount != null) {
+        this.account = newAccount;
+        this.accountService.getUserInfo(newAccount).then((data) => {
+          this.role = data;
+          this.getProjects();
+        });
+      }
     });
   }
 
   getProjects() {
+    this.products = [];
     this.accountService.getProjects(this.account).then((data) => {
-      this.products = data;
+      for (let i = 0; i < data.length; i++) {
+        const obj = Object.assign({}, data[i]);
+        // tslint:disable-next-line: radix
+        if (obj['DEV'] != undefined) {
+          obj.dev = Number.parseInt(obj['DEV']);
+        }
+        if (obj['REV'] != undefined) {
+          obj.rev = Number.parseInt(obj['REV']);
+        }
+
+        if (obj.dev + obj.rev > 0) {
+          this.products.push(obj);
+        }
+      }
     });
   }
 

@@ -18,14 +18,18 @@ export class FinanceProjectsComponent implements OnInit {
     this.getProjectsForFinance();
 
     this.accountService.getAccountChangedObserver().subscribe((newAccount) => {
-      this.account = newAccount;
-      this.accountService.getUserInfo(newAccount).then((data) => {
-        this.role = data;
-      });
+      if (newAccount != null) {
+        this.account = newAccount;
+        this.accountService.getUserInfo(newAccount).then((data) => {
+          this.role = data;
+          this.getProjectsForFinance();
+        });
+      }
     });
   }
 
   getProjectsForFinance() {
+    this.products = [];
     this.accountService.getProjectsForFinance(this.account).then((data) => {
       for (let i = 0; i < data.length; i++) {
         const obj = Object.assign({}, data[i]);
@@ -37,9 +41,15 @@ export class FinanceProjectsComponent implements OnInit {
           obj.rev = Number.parseInt(obj['REV']);
         }
 
-        this.products.push(obj);
+        if (obj.dev + obj.rev > 0) {
+          this.products.push(obj);
+        }
       }
     });
+  }
+
+  onFunderApplied(data) {
+    this.getProjectsForFinance();
   }
 
   // this.products = [

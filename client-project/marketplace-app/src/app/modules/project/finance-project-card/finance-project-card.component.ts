@@ -1,9 +1,10 @@
 import { AccountService } from './../../../services/account.service';
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import ProductCard from 'src/app/shared/models/ProductCard';
 import ApplyFunder from 'src/app/shared/models/ApplyFunder';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { ThrowStmt } from '@angular/compiler';
 
 @Component({
   selector: 'app-finance-project-card',
@@ -12,6 +13,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 })
 export class FinanceProjectCardComponent implements OnInit {
   @Input() product: ProductCard;
+  @Output() financeAppliedEmitter: EventEmitter<boolean> = new EventEmitter();
   applyFunderGroup = new FormGroup({
     tokens: new FormControl(0),
   });
@@ -39,11 +41,14 @@ export class FinanceProjectCardComponent implements OnInit {
       this.applyFunderGroup.value
     );
     applyFunder.address = this.account;
-    applyFunder.projectId = Number.parseInt(this.product.id);
+    applyFunder.projectId = Number.parseInt(this.product.id.toString());
     applyFunder.tokens = Number.parseInt(applyFunder.tokens.toString());
 
     this.accountService.fundProject(applyFunder).then((data) => {
-      console.log('success');
+      this.financeAppliedEmitter.emit(true);
+      this.snackBar.open('Finance done', 'Finance', {
+        duration: 2000,
+      });
     });
   }
 }

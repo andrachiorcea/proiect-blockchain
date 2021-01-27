@@ -27,25 +27,27 @@ export class HeaderComponent implements OnInit {
       localStorage.setItem('currentAccount', this.accounts[0]);
     });
     this.accountService.getAccountChangedObserver().subscribe((newAccount) => {
-      this.accountService.getUserInfo(newAccount).then((data) => {
-        if (data === Roles.Manager) {
-          this.selectedAccountRole = Roles.ManagerDisplayName;
-        }
-        if (data === Roles.Freelancer) {
-          this.selectedAccountRole = Roles.FreelancerDisplayName;
-        }
-        if (data === Roles.Evaluator) {
-          this.selectedAccountRole = Roles.EvaluatorDisplayName;
-        }
-        if (data === Roles.Funder) {
-          this.selectedAccountRole = Roles.FunderDisplayName;
-        }
-        if (data === Roles.NotRegistered) {
-          this.selectedAccountRole = Roles.NotRegisteredDisplayName;
-        }
-        localStorage.setItem('currentRole', data);
-        localStorage.setItem('currentUser', newAccount);
-      });
+      if (newAccount != null) {
+        this.accountService.getUserInfo(newAccount).then((data) => {
+          if (data === Roles.Manager) {
+            this.selectedAccountRole = Roles.ManagerDisplayName;
+          }
+          if (data === Roles.Freelancer) {
+            this.selectedAccountRole = Roles.FreelancerDisplayName;
+          }
+          if (data === Roles.Evaluator) {
+            this.selectedAccountRole = Roles.EvaluatorDisplayName;
+          }
+          if (data === Roles.Funder) {
+            this.selectedAccountRole = Roles.FunderDisplayName;
+          }
+          if (data === Roles.NotRegistered) {
+            this.selectedAccountRole = Roles.NotRegisteredDisplayName;
+          }
+          localStorage.setItem('currentRole', data);
+          localStorage.setItem('currentUser', newAccount);
+        });
+      }
     });
   }
 

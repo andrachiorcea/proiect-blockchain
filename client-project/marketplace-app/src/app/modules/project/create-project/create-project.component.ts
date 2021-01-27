@@ -35,10 +35,12 @@ export class CreateProjectComponent implements OnInit {
     });
 
     this.accountService.getAccountChangedObserver().subscribe((newAccount) => {
-      this.account = newAccount;
-      this.accountService.getUserInfo(this.account).then((data) => {
-        this.role = data;
-      });
+      if (newAccount != null) {
+        this.account = newAccount;
+        this.accountService.getUserInfo(this.account).then((data) => {
+          this.role = data;
+        });
+      }
     });
   }
 

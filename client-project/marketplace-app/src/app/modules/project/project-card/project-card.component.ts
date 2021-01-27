@@ -16,7 +16,9 @@ export class ProjectCardComponent implements OnInit {
   ngOnInit(): void {
     this.account = localStorage.getItem('currentAccount');
     this.accountService.getAccountChangedObserver().subscribe((newAccount) => {
-      this.account = newAccount;
+      if (newAccount != null) {
+        this.account = newAccount;
+      }
     });
   }
 
