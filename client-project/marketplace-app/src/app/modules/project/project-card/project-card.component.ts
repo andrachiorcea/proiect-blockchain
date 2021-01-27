@@ -21,13 +21,9 @@ export class ProjectCardComponent implements OnInit {
   }
 
   applyAsFreelancer() {
-    this.accountService.applyAsFreelancer(
-      this.product.productId,
-      20,
-      this.account
-    );
+    this.accountService.applyAsFreelancer(this.product.id, 20, this.account);
   }
   applyAsEvaluator() {
-    this.accountService.applyAsEvaluator(this.product.productId, this.account);
+    this.accountService.applyAsEvaluator(this.product.id, this.account);
   }
 }

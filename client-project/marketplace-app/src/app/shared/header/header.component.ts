@@ -24,6 +24,7 @@ export class HeaderComponent implements OnInit {
     this.accountService.getAccounts().then((data) => {
       this.accounts = data;
       this.options.controls.account.setValue(this.accounts[0]);
+      localStorage.setItem('currentAccount', this.accounts[0]);
     });
     this.accountService.getAccountChangedObserver().subscribe((newAccount) => {
       this.accountService.getUserInfo(newAccount).then((data) => {

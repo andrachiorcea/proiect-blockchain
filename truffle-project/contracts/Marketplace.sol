@@ -38,6 +38,7 @@ contract Marketplace {
         string description;
         uint DEV;
         uint REV;
+        uint remainingSum;
         string expertise;
         bool wasArbitrationNeeded;
         address _manager;
@@ -81,20 +82,20 @@ contract Marketplace {
      event ProductDevelopmentFinished(uint productId);
 
     constructor(
-        CustomToken tokenContract,
+        CustomToken _tokenContract,
         Manager[] memory _managers,
         Freelancer[] memory _freelancers,
         Evaluator[] memory _evaluators,
         Funder[] memory _funders,
-        uint numberTokens)
+        uint _numberTokens)
     { 
         owner = msg.sender;
-        customTokenContract = tokenContract;
+        customTokenContract = _tokenContract;
         require(
-            _funders.length * numberTokens <= tokenContract.balanceOf(owner),
+            _funders.length * _numberTokens <= customTokenContract.balanceOf(owner),
             "The tokens that you want to allocate are more than the total number of tokens in the contract"
         );
-
+        require(customTokenContract.balanceOf(owner) > 0, "You don't have any money");
         for (uint256 i = 0; i < _managers.length; i++) {
             managers[_managers[i].addr] = _managers[i];
             managers[_managers[i].addr].reputation = 5;
@@ -108,6 +109,13 @@ contract Marketplace {
         for (uint256 i = 0; i < _evaluators.length; i++) {
             evaluators[_evaluators[i].addr] = _evaluators[i];
             evaluators[_evaluators[i].addr].reputation = 5;
+        }
+
+        for (uint256 i = 0; i < _funders.length; i++) {
+            funders[_funders[i].addr] = _funders[i];
+            funders[_funders[i].addr].numberOfTokens = _numberTokens;
+            // customTokenContract.increaseAllowance(_funders[i].addr, _numberTokens*100000);
+            // customTokenContract.transferFrom(owner, _funders[i].addr, _numberTokens);
         }
     }
 
@@ -183,7 +191,7 @@ contract Marketplace {
     }
 
     modifier onlyEvaluatorAndFreelancer() {
-        require(funders[msg.sender].addr != address(0x0) && evaluators[msg.sender].addr != address(0x0),
+        require(freelancers[msg.sender].addr != address(0x0) || evaluators[msg.sender].addr != address(0x0),
         "Function restricted to evaluators and freelancers");
         _;
     }
@@ -290,7 +298,7 @@ contract Marketplace {
         Funder memory funder = funders[msg.sender];
         require(_numberOfTokens > 0, "You must provide some tokens");
         require(funder.numberOfTokens == 0, "You are alreay registered as a funder");
-
+        customTokenContract.transfer(msg.sender, _numberOfTokens);
         funders[msg.sender] = Funder ({
             numberOfTokens: _numberOfTokens,
             addr: msg.sender
@@ -314,6 +322,7 @@ contract Marketplace {
               description: desc,
               DEV: devCost,
               REV: revCost,
+              remainingSum: devCost + revCost,
               expertise: expertise,
               _manager: msg.sender,
               _evaluator: address(0x0),
@@ -334,6 +343,7 @@ contract Marketplace {
             if (prod._funders[i] != address(0x0)) {
                 customTokenContract.approve(prod._funders[i], funderShares[prod._funders[i]][prod.id]);
                 customTokenContract.transferFrom(address(this), prod._funders[i], funderShares[prod._funders[i]][prod.id]);
+                funders[prod._funders[i]].numberOfTokens += funderShares[prod._funders[i]][prod.id];
             }
         }
         deleteProduct(id);
@@ -348,6 +358,7 @@ contract Marketplace {
         uint idx;
         (exists, idx) = searchExistingFunderForProduct(prod);
         if (prod.DEV + prod.REV >= fundingSum) {
+            customTokenContract.approve(address(this), fundingSum);
             customTokenContract.transferFrom(msg.sender, address(this), fundingSum);
             if (exists) {
                 funderShares[msg.sender][productId] += fundingSum;
@@ -356,11 +367,14 @@ contract Marketplace {
                 activeProducts[productIdx]._funders.push(msg.sender);
                 funderShares[msg.sender][productId] = fundingSum;
             }
+            prod.remainingSum -= fundingSum;
+            funders[msg.sender].numberOfTokens -=  fundingSum;
         } else {
          if (prod.DEV + prod.REV == fundingSum) {
             prod.phase = ProductStage.FreelancersNeeded;
         } else {
            uint neededFunds = fundingSum - prod.DEV + prod.REV;
+            customTokenContract.approve(address(this), neededFunds);
            customTokenContract.transferFrom(msg.sender, address(this), neededFunds);
            if (exists) {
                 funderShares[msg.sender][productId] += neededFunds;
@@ -370,6 +384,8 @@ contract Marketplace {
                 funderShares[msg.sender][productId] = neededFunds;
             }
            prod.phase = ProductStage.FreelancersNeeded;
+           prod.remainingSum = 0;
+           funders[msg.sender].numberOfTokens -=  neededFunds;
         }
       }
     }
@@ -382,13 +398,15 @@ contract Marketplace {
         require(withdrawSum <= funderShares[msg.sender][productIdx], "Sum to withdrawis bigger than contribution");
 
         customTokenContract.transferFrom(address(this), msg.sender, withdrawSum);
+        funders[msg.sender].numberOfTokens +=  withdrawSum;
         if (withdrawSum == funderShares[msg.sender][productIdx]) {
             delete funderShares[msg.sender][productIdx];
         }
     }
 
-    function consultFinancedProducts() onlyEvaluatorAndFreelancer() external view
-    returns (Product[] memory financedProducts) {
+    function consultFinancedProducts() onlyEvaluatorAndFreelancer() public view
+    returns (Product[] memory) {
+        Product[] memory financedProducts = new Product[](activeProducts.length);
         uint j = 0;
         for (uint i = 0; i < activeProducts.length; i++) {
             if (activeProducts[i].phase == ProductStage.FreelancersNeeded) {
@@ -396,17 +414,20 @@ contract Marketplace {
                 j = j+1;
             }
         }
+        return financedProducts;
     }
 
-    function getAwaitingFinanceProducts() onlyFreelancer() 
-    external view returns(Product[] memory awaitingFinance) {
+    function getAwaitingFinanceProducts() onlyFunder() 
+    external view returns(Product[] memory) {
         uint j = 0;
+        Product[] memory awaitingFinance = new Product[](activeProducts.length);
         for (uint i = 0; i < activeProducts.length; i++) {
             if (activeProducts[i].phase == ProductStage.FundsNeeded) {
                 awaitingFinance[j] = activeProducts[i];
                 j = j+1;
             }
         }
+        return awaitingFinance;
     }
 
     function applyDeadlineExpired(uint id) internal {
@@ -415,6 +436,7 @@ contract Marketplace {
             if (prod._funders[i] != address(0x0)) {
                 customTokenContract.approve(prod._funders[i], funderShares[prod._funders[i]][prod.id]);
                 customTokenContract.transferFrom(address(this), prod._funders[i], funderShares[prod._funders[i]][prod.id]);
+                funders[msg.sender].numberOfTokens +=  funderShares[prod._funders[i]][prod.id];
             }
         }
         deleteProduct(id);
@@ -428,6 +450,7 @@ contract Marketplace {
             applyDeadlineExpired(productId);
         }
         else {
+            require(keccak256(abi.encodePacked(prod.expertise)) == keccak256(abi.encodePacked(evaluators[msg.sender].expertise)), "You are not experienced in this field");
             prod._evaluator = msg.sender;
         }
     }
@@ -542,6 +565,7 @@ contract Marketplace {
             for (uint i = 0; i < prod._funders.length; i++) {
                 customTokenContract.approve(prod._funders[i], funderShares[prod._funders[i]][prod.id] + (prod.DEV) * (funderShares[prod._funders[i]][prod.id]/prod.REV));
                 customTokenContract.transferFrom(address(this), prod._funders[i], funderShares[prod._funders[i]][prod.id] + (prod.DEV) * (funderShares[prod._funders[i]][prod.id]/prod.REV));
+                funders[msg.sender].numberOfTokens +=  funderShares[prod._funders[i]][prod.id] + (prod.DEV) * (funderShares[prod._funders[i]][prod.id]/prod.REV);
             }
             require(prod.finalizeDeadline > block.timestamp, "Expired working deadline");
         }
@@ -564,6 +588,7 @@ contract Marketplace {
             for (uint i = 0; i < prod._funders.length; i++) {
                 customTokenContract.approve(prod._funders[i], funderShares[prod._funders[i]][prod.id] + (prod.DEV/2) * (funderShares[prod._funders[i]][prod.id]/prod.REV));
                 customTokenContract.transferFrom(address(this), prod._funders[i], funderShares[prod._funders[i]][prod.id] + (prod.DEV/2) * (funderShares[prod._funders[i]][prod.id]/prod.REV));
+                funders[msg.sender].numberOfTokens +=  funderShares[prod._funders[i]][prod.id] + (prod.DEV/2) * (funderShares[prod._funders[i]][prod.id]/prod.REV);
             }
         }
         else {

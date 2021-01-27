@@ -1,3 +1,4 @@
+import ProductCard from 'src/app/shared/models/ProductCard';
 import ApplyFunder from 'src/app/shared/models/ApplyFunder';
 import Product from 'src/app/shared/models/Product';
 import { async } from '@angular/core/testing';
@@ -44,7 +45,9 @@ export class AccountService {
   }
 
   onAccountChanged(value: string) {
-    this.accountChangedObserver.next(value);
+    if (value != null) {
+      this.accountChangedObserver.next(value);
+    }
   }
 
   private async enableMetaMaskAccount(): Promise<any> {
@@ -92,21 +95,42 @@ export class AccountService {
     }) as Promise<string>;
   }
 
-  public async getProjects() {
+  public async getProjects(address: string) {
     return new Promise((resolve, reject) => {
       this.marketPlaceContract
         .deployed()
         .then((instance) => {
-          return instance.getProducts();
+          return instance.consultFinancedProducts({
+            from: address,
+          });
         })
         .then((data) => {
           resolve(data);
         })
         .catch((error) => {
           console.log(error);
-          return reject('transfer.service error');
+          return reject(error);
         });
-    }) as Promise<Product[]>;
+    }) as Promise<ProductCard[]>;
+  }
+
+  public async getProjectsForFinance(address: string) {
+    return new Promise((resolve, reject) => {
+      this.marketPlaceContract
+        .deployed()
+        .then((instance) => {
+          return instance.getAwaitingFinanceProducts({
+            from: address,
+          });
+        })
+        .then((data) => {
+          resolve(data);
+        })
+        .catch((error) => {
+          console.log(error);
+          return reject(error);
+        });
+    }) as Promise<ProductCard[]>;
   }
 
   public async registerUser(user: User) {
@@ -152,7 +176,7 @@ export class AccountService {
       this.marketPlaceContract
         .deployed()
         .then((instance) => {
-          return instance.createProject(
+          return instance.createProduct(
             project.description,
             project.devCost,
             project.revCost,
@@ -167,7 +191,7 @@ export class AccountService {
         })
         .catch((error) => {
           console.log(error);
-          return reject('transfer.service error');
+          return reject(error);
         });
     }) as Promise<string>;
   }
@@ -177,7 +201,7 @@ export class AccountService {
       this.marketPlaceContract
         .deployed()
         .then((instance) => {
-          return instance.fundProject(
+          return instance.fundProduct(
             applyFunder.projectId,
             applyFunder.tokens,
             {
@@ -190,7 +214,7 @@ export class AccountService {
         })
         .catch((error) => {
           console.log(error);
-          return reject('transfer.service error');
+          return reject(error);
         });
     }) as Promise<string>;
   }
@@ -232,7 +256,7 @@ export class AccountService {
         })
         .catch((error) => {
           console.log(error);
-          return reject('transfer.service error');
+          return reject(error);
         });
     }) as Promise<string>;
   }

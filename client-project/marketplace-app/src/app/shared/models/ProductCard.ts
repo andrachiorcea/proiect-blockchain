@@ -1,5 +1,5 @@
 class ProductCard {
-  productId: number;
+  id: number;
   description: string;
   dev: number;
   rev: number;

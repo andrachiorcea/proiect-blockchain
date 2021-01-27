@@ -1,5 +1,5 @@
 <div class="page">
-  <div *ngIf="role != 'none'" class="content">
+  <div *ngIf="role == 'funder'" class="content">
     <h2>Find projects for finance</h2>
     <div class="project-section">
       <app-finance-project-card
@@ -8,7 +8,7 @@
       ></app-finance-project-card>
     </div>
   </div>
-  <div *ngIf="role == 'none'" class="content">
-    <h2>You are not registered. Please register to view the projects</h2>
+  <div *ngIf="role != 'funder'" class="content">
+    <h2>This page is restricted only to funders</h2>
   </div>
 </div>
